@@ -61,10 +61,15 @@ db.serialize(() => {
 // Middleware проверки токена
 function authenticateToken(req, res, next) {
   const token = req.cookies.token;
+  console.log('🔐 authenticateToken - token в cookies:', token ? 'да' : 'нет');
   if (!token) return res.status(401).json({ error: 'Требуется вход' });
   
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Невалидный токен' });
+    if (err) {
+      console.error('❌ JWT ошибка:', err.message);
+      return res.status(403).json({ error: 'Невалидный токен' });
+    }
+    console.log('✓ JWT успешно декодирован - userId:', user.id);
     req.userId = user.id;
     req.username = user.username;
     next();
@@ -218,6 +223,7 @@ app.delete('/api/history/:id', authenticateToken, (req, res) => {
 // Смена пароля
 app.post('/api/change-password', authenticateToken, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+  console.log('🔑 Смена пароля - req.userId:', req.userId, 'req.username:', req.username);
   
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'Все поля обязательны' });
@@ -234,6 +240,7 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
         'SELECT password_hash FROM users WHERE id = ?',
         [req.userId],
         (err, row) => {
+          console.log('📋 Поиск пользователя по id:', req.userId, '- результат:', row ? 'найден' : 'НЕ найден');
           if (err) reject(err);
           else resolve(row);
         }
