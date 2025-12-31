@@ -6,6 +6,7 @@ const accounts = [
 const sexState = { current: 'male' };
 const historyKey = 'bf-history-v1';
 const currentUserKey = 'bf-current-user';
+const passwordKey = 'bf-password';
 let currentUser = loadCurrentUser();
 let authenticated = Boolean(currentUser);
 let history = loadHistory(currentUser);
@@ -52,6 +53,7 @@ function closeModal() {
 
 openAuthModal?.addEventListener('click', openModal);
 closeAuthModal?.addEventListener('click', closeModal);
+currentUserPill?.addEventListener('click', openModal);
 authModal?.addEventListener('click', (e) => {
 	if (e.target === authModal) closeModal();
 });
@@ -95,17 +97,35 @@ function setSex(sex) {
 }
 
 function updateUserBadge() {
+	const loginForm = document.getElementById('loginForm');
+	const logoutForm = document.getElementById('logoutForm');
+	const modalTitle = document.getElementById('modalTitle');
+	const userDisplayName = document.getElementById('userDisplayName');
+	
 	if (authenticated && currentUser) {
 		currentUserPill.textContent = '✓ Ты: ' + getUserName(currentUser);
 		currentUserPill.classList.remove('status-warn');
 		currentUserPill.classList.add('status-ok');
 		currentUserPill.style.display = 'inline-block';
 		openAuthModal.style.display = 'none';
+		loginForm.style.display = 'none';
+		logoutForm.style.display = 'block';
+		modalTitle.textContent = 'Аккаунт';
+		userDisplayName.textContent = getUserName(currentUser);
+		// Показываем кнопку выхода, скрываем вход
+		logoutBtn.style.display = '';
+		loginBtn.style.display = 'none';
 	} else {
 		currentUserPill.style.display = 'none';
 		currentUserPill.classList.remove('status-ok');
 		currentUserPill.classList.add('status-warn');
 		openAuthModal.style.display = '';
+		loginForm.style.display = 'block';
+		logoutForm.style.display = 'none';
+		modalTitle.textContent = 'Кто ты?';
+		// Показываем кнопку входа, скрываем выход
+		logoutBtn.style.display = 'none';
+		loginBtn.style.display = '';
 	}
 }
 
@@ -432,6 +452,112 @@ loginBtn.addEventListener('click', () => {
 	closeModal();
 });
 logoutBtn.addEventListener('click', handleLogout);
+
+// Функции для управления паролем
+function getPassword(userId) {
+	const customPassword = localStorage.getItem(`${passwordKey}-${userId}`);
+	if (customPassword) return customPassword;
+	const account = accounts.find(a => a.id === userId);
+	return account ? account.password : '1234';
+}
+
+function setPassword(userId, newPassword) {
+	localStorage.setItem(`${passwordKey}-${userId}`, newPassword);
+}
+
+function handleChangePassword() {
+	const currentPassword = document.getElementById('currentPassword').value;
+	const newPassword = document.getElementById('newPassword').value;
+	const confirmPassword = document.getElementById('confirmPassword').value;
+	const statusEl = document.getElementById('passwordChangeStatus');
+	
+	if (!currentPassword || !newPassword || !confirmPassword) {
+		statusEl.textContent = '❌ Заполни все поля';
+		statusEl.style.color = '#ef4444';
+		return;
+	}
+	
+	const actualPassword = getPassword(currentUser);
+	if (currentPassword !== actualPassword) {
+		statusEl.textContent = '❌ Текущий пароль неверный';
+		statusEl.style.color = '#ef4444';
+		return;
+	}
+	
+	if (newPassword.length < 4) {
+		statusEl.textContent = '❌ Пароль должен быть не менее 4 символов';
+		statusEl.style.color = '#ef4444';
+		return;
+	}
+	
+	if (newPassword !== confirmPassword) {
+		statusEl.textContent = '❌ Пароли не совпадают';
+		statusEl.style.color = '#ef4444';
+		return;
+	}
+	
+	setPassword(currentUser, newPassword);
+	statusEl.textContent = '✓ Пароль успешно изменён!';
+	statusEl.style.color = '#86efac';
+	
+	setTimeout(() => {
+		document.getElementById('currentPassword').value = '';
+		document.getElementById('newPassword').value = '';
+		document.getElementById('confirmPassword').value = '';
+		toggleChangePasswordForm();
+	}, 1500);
+}
+
+function toggleChangePasswordForm() {
+	const changeForm = document.getElementById('changePasswordForm');
+	const accountInfo = document.getElementById('accountInfo');
+	const accountActions = document.getElementById('accountActions');
+	
+	if (changeForm.style.display === 'none') {
+		changeForm.style.display = 'block';
+		accountInfo.style.display = 'none';
+		accountActions.style.display = 'none';
+	} else {
+		changeForm.style.display = 'none';
+		accountInfo.style.display = 'block';
+		accountActions.style.display = 'block';
+	}
+}
+
+// Event listeners для смены пароля
+document.getElementById('toggleChangePassword')?.addEventListener('click', toggleChangePasswordForm);
+document.getElementById('saveNewPassword')?.addEventListener('click', handleChangePassword);
+document.getElementById('cancelChangePassword')?.addEventListener('click', toggleChangePasswordForm);
+
+// Обновляем функцию входа для использования getPassword
+const originalHandleLogin = handleLogin;
+function handleLogin() {
+	const selectedId = userSelect.value;
+	const account = accounts.find(a => a.id === selectedId);
+	if (!account) return;
+	
+	const actualPassword = getPassword(selectedId);
+	if (passwordInput.value.trim() !== actualPassword) {
+		authenticated = false;
+		currentUser = '';
+		authStatus.textContent = '❌ Пароль неверный. Попробуй 1234.';
+		authStatus.classList.add('status-warn');
+		updateUserBadge();
+		return;
+	}
+
+	authenticated = true;
+	currentUser = account.id;
+	localStorage.setItem(currentUserKey, currentUser);
+	history = loadHistory(currentUser);
+	authStatus.textContent = '✓ Привет, ' + account.label + '! Твои данные сохранятся здесь.';
+	authStatus.classList.remove('status-warn');
+	passwordInput.value = '';
+	updateUserBadge();
+	renderHistory();
+	drawChart();
+	updateLast(history[history.length - 1]);
+}
 
 userSelect.value = currentUser || accounts[0].id;
 if (authenticated && currentUser) {

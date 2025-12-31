@@ -133,6 +133,15 @@ header {
 	font-size: 13px;
 	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
 	backdrop-filter: blur(12px);
+	cursor: pointer;
+	transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.pill-badge:hover {
+	background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.2));
+	border-color: rgba(16, 185, 129, 0.4);
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
 	display: inline-block;
 }
 
