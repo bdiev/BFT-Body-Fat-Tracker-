@@ -15,9 +15,9 @@
 	<div class="wrap">
 		<header>
 			<div>
-				<p class="pill">PWA • Offline ready</p>
-				<h1 class="title">Трекер процента жира</h1>
-				<p class="subtitle">Считайте процент жира по формуле US Navy, переключайте мужскую/женскую формулу, сохраняйте историю локально и отслеживайте динамику на графике.</p>
+				<p class="pill">Работает везде • Даже без интернета</p>
+				<h1 class="title">Проверь жир</h1>
+				<p class="subtitle">Узнай процент жира по простой формуле. Отслеживай прогресс и смотри как меняется на графике.</p>
 			</div>
 			<div class="stat card" style="min-width: 220px;">
 				<span class="label">Последний результат</span>
@@ -29,10 +29,10 @@
 		<div class="card" id="auth-card">
 			<div style="display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap: wrap;">
 				<div>
-					<strong>Аккаунт</strong>
-					<p class="muted" style="margin:4px 0 0;">Выберите пользователя и введите пароль 1234</p>
+					<strong>Кто ты?</strong>
+					<p class="muted" style="margin:4px 0 0;">Выбери себя и войди</p>
 				</div>
-				<span class="badge" id="current-user-pill">Не вошли</span>
+				<span class="badge" id="current-user-pill" style="display:none;">Не вошли</span>
 			</div>
 			<div class="auth-grid" style="margin-top:12px;">
 				<div>
@@ -45,22 +45,22 @@
 				</div>
 				<div>
 					<label for="passwordInput">Пароль</label>
-					<input id="passwordInput" type="password" inputmode="numeric" placeholder="1234" />
+					<input id="passwordInput" type="password" inputmode="numeric" />
 				</div>
 				<div style="display:flex; gap:8px;">
 					<button class="primary" id="loginBtn" type="button" style="flex:1;">Войти</button>
 					<button class="ghost" id="logoutBtn" type="button" style="flex:1;">Выйти</button>
 				</div>
 			</div>
-			<p class="muted" id="authStatus" style="margin:10px 0 0;">Войдите, чтобы сохранить личную историю.</p>
+			<p class="muted" id="authStatus" style="margin:10px 0 0;">Твои данные останутся при тебе — только локально.</p>
 		</div>
 
 		<section class="grid">
 			<div class="card" id="form-card">
 				<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap;">
 					<div>
-						<strong>Формула</strong>
-						<p class="muted" style="margin:4px 0 0;">Выберите пол для расчёта</p>
+						<strong>Твой пол</strong>
+						<p class="muted" style="margin:4px 0 0;">От этого зависит формула расчёта</p>
 					</div>
 					<div class="segmented" role="group" aria-label="Пол">
 						<button id="maleBtn" class="active" type="button">Мужчина</button>
@@ -94,16 +94,16 @@
 
 				<div class="result" aria-live="polite">
 					<div>
-						<div class="muted">Текущий расчёт</div>
+						<div class="muted">Получилось</div>
 						<div class="number" id="current-result">—</div>
 					</div>
-					<div class="muted" id="current-note">Введите данные выше</div>
+					<div class="muted" id="current-note">Заполни данные выше</div>
 				</div>
 			</div>
 
 			<div class="card">
 				<div style="display:flex; justify-content: space-between; align-items:center;">
-					<strong>История</strong>
+					<strong>Твой прогресс</strong>
 					<span class="muted" id="history-count">0 записей</span>
 				</div>
 				<div class="history" id="history"></div>
@@ -113,8 +113,8 @@
 		<section class="card">
 			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap;">
 				<div>
-					<strong>График изменения жира</strong>
-					<p class="muted" style="margin:4px 0 0;">Каждая точка — сохранённый расчёт</p>
+					<strong>Визуально видна траектория</strong>
+					<p class="muted" style="margin:4px 0 0;">Каждая точка — твой расчёт, линия показывает тренд</p>
 				</div>
 			</div>
 			<canvas id="chart" height="280"></canvas>

@@ -68,17 +68,18 @@ function setSex(sex) {
 	femaleBtn.classList.toggle('active', sex === 'female');
 	hipWrap.style.display = sex === 'female' ? 'block' : 'none';
 	currentNote.textContent = sex === 'female'
-		? 'Формула для женщин: талия + бёдра - шея'
-		: 'Формула для мужчин: талия - шея';
+		? 'Для девушек: (талия + бёдра − шея)'
+		: 'Для парней: (талия − шея)';
 }
 
 function updateUserBadge() {
 	if (authenticated && currentUser) {
-		currentUserPill.textContent = 'Аккаунт: ' + getUserName(currentUser);
+		currentUserPill.textContent = '👤 ' + getUserName(currentUser);
 		currentUserPill.classList.remove('status-warn');
 		currentUserPill.classList.add('status-ok');
+		currentUserPill.style.display = 'inline-block';
 	} else {
-		currentUserPill.textContent = 'Не вошли';
+		currentUserPill.style.display = 'none';
 		currentUserPill.classList.remove('status-ok');
 		currentUserPill.classList.add('status-warn');
 	}
@@ -113,7 +114,7 @@ function handleLogin() {
 	if (passwordInput.value.trim() !== account.password) {
 		authenticated = false;
 		currentUser = '';
-		authStatus.textContent = 'Неверный пароль. Попробуйте 1234.';
+		authStatus.textContent = '❌ Пароль неверный. Попробуй 1234.';
 		authStatus.classList.add('status-warn');
 		updateUserBadge();
 		return;
@@ -123,7 +124,7 @@ function handleLogin() {
 	currentUser = account.id;
 	localStorage.setItem(currentUserKey, currentUser);
 	history = loadHistory(currentUser);
-	authStatus.textContent = 'Вошли как ' + account.label + '. История сохранится отдельно.';
+	authStatus.textContent = '✓ Привет, ' + account.label + '! Твои данные сохранятся здесь.';
 	authStatus.classList.remove('status-warn');
 	passwordInput.value = '';
 	updateUserBadge();
@@ -137,7 +138,7 @@ function handleLogout() {
 	currentUser = '';
 	localStorage.removeItem(currentUserKey);
 	history = [];
-	authStatus.textContent = 'Вы вышли. Войдите, чтобы увидеть личные данные.';
+	authStatus.textContent = 'До свидания! Ты вышел.';
 	authStatus.classList.add('status-warn');
 	updateUserBadge();
 	renderHistory();
@@ -148,7 +149,7 @@ function handleLogout() {
 function handleCalculate() {
 	if (!authenticated || !currentUser) {
 		currentResult.textContent = '—';
-		currentNote.textContent = 'Сначала войдите в один из аккаунтов.';
+		currentNote.textContent = 'Нужно войти, чтобы сохранить результат';
 		return;
 	}
 
@@ -159,7 +160,7 @@ function handleCalculate() {
 
 	if (!h || !n || !w || h <= 0 || n <= 0 || w <= 0 || (sexState.current === 'female' && (!hip || hip <= 0))) {
 		currentResult.textContent = '—';
-		currentNote.textContent = 'Проверьте, что все поля заполнены корректно';
+		currentNote.textContent = 'Заполни все поля корректно';
 		return;
 	}
 
@@ -189,7 +190,7 @@ function handleCalculate() {
 
 function renderHistory() {
 	if (!authenticated || !currentUser) {
-		historyList.innerHTML = '<p class="muted">Войдите, чтобы увидеть историю выбранного пользователя.</p>';
+		historyList.innerHTML = '<p class="muted">Войди, чтобы увидеть свой прогресс</p>';
 		historyCount.textContent = '0 записей';
 		return;
 	}
@@ -199,7 +200,7 @@ function renderHistory() {
 	historyCount.textContent = sorted.length + ' ' + plural(sorted.length, ['запись', 'записи', 'записей']);
 
 	if (!sorted.length) {
-		historyList.innerHTML = '<p class="muted">История пока пустая.</p>';
+		historyList.innerHTML = '<p class="muted">Пока ничего. Считай и сохраняй!</p>';
 		return;
 	}
 
@@ -211,11 +212,11 @@ function renderHistory() {
 		row.innerHTML = `
 			<div>
 				<strong>${item.bf}%</strong> <small>${item.group}</small><br />
-				<small>${item.sex === 'male' ? 'Муж' : 'Жен'}, рост ${item.height} см</small>
+				<small>${item.sex === 'male' ? '♂' : '♀'} ${item.height} см</small>
 			</div>
 			<div style="text-align:right;">
 				<small>${dateStr}</small>
-				<button aria-label="Удалить" style="margin-top:6px; background:none; border:1px solid rgba(255,255,255,0.08); color:var(--muted); padding:6px 10px; border-radius:10px; cursor:pointer;">Удалить</button>
+				<button aria-label="Удалить" style="margin-top:6px; background:none; border:1px solid rgba(255,255,255,0.08); color:var(--muted); padding:6px 10px; border-radius:10px; cursor:pointer;">×</button>
 			</div>`;
 		row.querySelector('button').addEventListener('click', () => deleteEntry(item.id));
 		historyList.appendChild(row);
@@ -276,14 +277,14 @@ function drawChart() {
 	if (!authenticated || !currentUser) {
 		ctx.fillStyle = '#9aa7bd';
 		ctx.font = '16px "SF Pro Display"';
-		ctx.fillText('Войдите, чтобы увидеть график.', 20, 40);
+		ctx.fillText('Войди, чтобы увидеть график прогресса', 20, 40);
 		return;
 	}
 
 	if (entries.length < 2) {
 		ctx.fillStyle = '#9aa7bd';
 		ctx.font = '16px "SF Pro Display"';
-		ctx.fillText('Добавьте 2+ записей, чтобы увидеть динамику', 20, 40);
+		ctx.fillText('Добавь две записи, чтобы увидеть тренд', 20, 40);
 		return;
 	}
 
@@ -385,7 +386,7 @@ function drawChart() {
 
 function clearHistory() {
 	if (!authenticated || !currentUser) {
-		currentNote.textContent = 'Войдите, чтобы очистить или сохранять данные.';
+		currentNote.textContent = 'Войди сначала, чтобы очистить историю';
 		return;
 	}
 	history.splice(0, history.length);
