@@ -1,17 +1,61 @@
-const accounts = [
-	{ id: 'bohdan', label: 'Bohdan', password: '1234' },
-	{ id: 'konstantin', label: 'Konstantin', password: '1234' },
-	{ id: 'izabella', label: 'Izabella', password: '1234' }
-];
+// ===== СОСТОЯНИЕ И ПЕРЕМЕННЫЕ =====
 const sexState = { current: 'male' };
-const historyKey = 'bf-history-v1';
-const currentUserKey = 'bf-current-user';
-const passwordKey = 'bf-password';
-let currentUser = loadCurrentUser();
-let authenticated = Boolean(currentUser);
-let history = loadHistory(currentUser);
+let currentUser = null;
+let authenticated = false;
+let history = [];
+let userId = null;
 
-// Modal элементы
+// ===== API ФУНКЦИИ =====
+async function apiCall(endpoint, options = {}) {
+	try {
+		const response = await fetch(endpoint, {
+			credentials: 'include',
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				...options.headers
+			}
+		});
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.error || 'API ошибка');
+		}
+		return await response.json();
+	} catch (err) {
+		console.error('API ошибка:', err);
+		throw err;
+	}
+}
+
+async function loadUserData() {
+	try {
+		const user = await apiCall('/api/me');
+		currentUser = user.username;
+		userId = user.id;
+		authenticated = true;
+		const entries = await apiCall('/api/history');
+		history = entries.map(e => ({
+			id: e.id,
+			sex: e.sex,
+			height: e.height,
+			neck: e.neck,
+			waist: e.waist,
+			hip: e.hip,
+			bf: e.bf,
+			group: e.group,
+			timestamp: new Date(e.timestamp).getTime()
+		}));
+		return true;
+	} catch {
+		currentUser = null;
+		userId = null;
+		authenticated = false;
+		history = [];
+		return false;
+	}
+}
+
+// ===== DOM ЭЛЕМЕНТЫ =====
 const authModal = document.getElementById('authModal');
 const openAuthModal = document.getElementById('openAuthModal');
 const closeAuthModal = document.getElementById('closeAuthModal');
@@ -35,12 +79,22 @@ const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const authStatus = document.getElementById('authStatus');
 const currentUserPill = document.getElementById('current-user-pill');
+
+// Регистрация элементы
+const signupForm = document.getElementById('signupForm');
+const signupUsernameInput = document.getElementById('signupUsername');
+const signupEmailInput = document.getElementById('signupEmail');
+const signupPasswordInput = document.getElementById('signupPassword');
+const signupBtn = document.getElementById('signupBtn');
+const toggleSignupBtn = document.getElementById('toggleSignup');
+const backToLoginBtn = document.getElementById('backToLogin');
+
 let viewW = 0;
 let viewH = 0;
 const maxPoints = 24;
 const chartHeight = 320;
 
-// Функции для модалей
+// ===== ФУНКЦИИ ДЛЯ МОДАЛЕЙ =====
 function openModal() {
 	authModal.classList.add('active');
 	document.body.style.overflow = 'hidden';
@@ -58,34 +112,7 @@ authModal?.addEventListener('click', (e) => {
 	if (e.target === authModal) closeModal();
 });
 
-function loadCurrentUser() {
-	try {
-		return localStorage.getItem(currentUserKey) || '';
-	} catch (e) {
-		return '';
-	}
-}
-
-function loadHistory(userId) {
-	if (!userId) return [];
-	try {
-		const raw = localStorage.getItem(`${historyKey}-${userId}`) || localStorage.getItem(historyKey);
-		return raw ? JSON.parse(raw) : [];
-	} catch (e) {
-		return [];
-	}
-}
-
-function saveHistory(list, userId) {
-	if (!userId) return;
-	localStorage.setItem(`${historyKey}-${userId}`, JSON.stringify(list));
-}
-
-function getUserName(userId) {
-	const acc = accounts.find(a => a.id === userId);
-	return acc ? acc.label : 'Неизвестно';
-}
-
+// ===== ФУНКЦИИ ЛОГИКИ =====
 function setSex(sex) {
 	sexState.current = sex;
 	maleBtn.classList.toggle('active', sex === 'male');
@@ -103,7 +130,7 @@ function updateUserBadge() {
 	const userDisplayName = document.getElementById('userDisplayName');
 	
 	if (authenticated && currentUser) {
-		currentUserPill.textContent = '✓ Ты: ' + getUserName(currentUser);
+		currentUserPill.textContent = '✓ Ты: ' + currentUser;
 		currentUserPill.classList.remove('status-warn');
 		currentUserPill.classList.add('status-ok');
 		currentUserPill.style.display = 'inline-block';
@@ -111,10 +138,10 @@ function updateUserBadge() {
 		loginForm.style.display = 'none';
 		logoutForm.style.display = 'block';
 		modalTitle.textContent = 'Аккаунт';
-		userDisplayName.textContent = getUserName(currentUser);
-		// Показываем кнопку выхода, скрываем вход
+		userDisplayName.textContent = currentUser;
 		logoutBtn.style.display = '';
 		loginBtn.style.display = 'none';
+		toggleSignupBtn.style.display = 'none';
 	} else {
 		currentUserPill.style.display = 'none';
 		currentUserPill.classList.remove('status-ok');
@@ -122,10 +149,11 @@ function updateUserBadge() {
 		openAuthModal.style.display = '';
 		loginForm.style.display = 'block';
 		logoutForm.style.display = 'none';
+		signupForm.style.display = 'none';
 		modalTitle.textContent = 'Кто ты?';
-		// Показываем кнопку входа, скрываем выход
 		logoutBtn.style.display = 'none';
 		loginBtn.style.display = '';
+		toggleSignupBtn.style.display = '';
 	}
 }
 
@@ -151,47 +179,116 @@ function classify(bf, sex) {
 	return ranges.find(r => bf <= r.max);
 }
 
-function handleLogin() {
-	const selectedId = userSelect.value;
-	const account = accounts.find(a => a.id === selectedId);
-	if (!account) return;
-	if (passwordInput.value.trim() !== account.password) {
-		authenticated = false;
-		currentUser = '';
-		authStatus.textContent = '❌ Пароль неверный. Попробуй 1234.';
-		authStatus.classList.add('status-warn');
-		updateUserBadge();
+// ===== АВТОРИЗАЦИЯ =====
+async function handleSignup() {
+	const username = signupUsernameInput.value.trim();
+	const email = signupEmailInput.value.trim();
+	const password = signupPasswordInput.value.trim();
+	const status = document.getElementById('signupStatus');
+	
+	if (!username || !password) {
+		status.textContent = '❌ Username и пароль обязательны';
+		status.style.color = '#ef4444';
 		return;
 	}
-
-	authenticated = true;
-	currentUser = account.id;
-	localStorage.setItem(currentUserKey, currentUser);
-	history = loadHistory(currentUser);
-	authStatus.textContent = '✓ Привет, ' + account.label + '! Твои данные сохранятся здесь.';
-	authStatus.classList.remove('status-warn');
-	passwordInput.value = '';
-	updateUserBadge();
-	renderHistory();
-	drawChart();
-	updateLast(history[history.length - 1]);
+	
+	try {
+		const result = await apiCall('/api/signup', {
+			method: 'POST',
+			body: JSON.stringify({ username, email: email || null, password })
+		});
+		
+		status.textContent = '✓ ' + result.message;
+		status.style.color = '#86efac';
+		
+		signupUsernameInput.value = '';
+		signupEmailInput.value = '';
+		signupPasswordInput.value = '';
+		
+		await loadUserData();
+		updateUserBadge();
+		renderHistory();
+		drawChart();
+		updateLast(history[history.length - 1]);
+		
+		setTimeout(() => {
+			toggleSignupForm();
+		}, 1500);
+	} catch (err) {
+		status.textContent = '❌ ' + err.message;
+		status.style.color = '#ef4444';
+	}
 }
 
-function handleLogout() {
-	authenticated = false;
-	currentUser = '';
-	localStorage.removeItem(currentUserKey);
-	history = [];
-	authStatus.textContent = 'До свидания! Ты вышел.';
-	authStatus.classList.add('status-warn');
-	updateUserBadge();
-	renderHistory();
-	drawChart();
-	updateLast();
-	closeModal();
+async function handleLogin() {
+	const username = userSelect.value.trim();
+	const password = passwordInput.value.trim();
+	
+	if (!username || !password) {
+		authStatus.textContent = '❌ Заполни username и пароль';
+		authStatus.classList.add('status-warn');
+		return;
+	}
+	
+	try {
+		const result = await apiCall('/api/login', {
+			method: 'POST',
+			body: JSON.stringify({ username, password })
+		});
+		
+		await loadUserData();
+		authStatus.textContent = '✓ Привет, ' + currentUser + '! Твои данные сохранены на сервере.';
+		authStatus.classList.remove('status-warn');
+		passwordInput.value = '';
+		updateUserBadge();
+		renderHistory();
+		drawChart();
+		updateLast(history[history.length - 1]);
+	} catch (err) {
+		authStatus.textContent = '❌ ' + err.message;
+		authStatus.classList.add('status-warn');
+		updateUserBadge();
+	}
 }
 
-function handleCalculate() {
+async function handleLogout() {
+	try {
+		await apiCall('/api/logout', { method: 'POST' });
+		authenticated = false;
+		currentUser = null;
+		userId = null;
+		history = [];
+		authStatus.textContent = 'До свидания! Ты вышел.';
+		authStatus.classList.add('status-warn');
+		updateUserBadge();
+		renderHistory();
+		drawChart();
+		updateLast();
+		closeModal();
+	} catch (err) {
+		authStatus.textContent = '❌ Ошибка выхода';
+		authStatus.classList.add('status-warn');
+	}
+}
+
+function toggleSignupForm() {
+	const loginForm = document.getElementById('loginForm');
+	const isSignupShown = signupForm.style.display === 'block';
+	
+	signupForm.style.display = isSignupShown ? 'none' : 'block';
+	loginForm.style.display = isSignupShown ? 'block' : 'none';
+	
+	if (!isSignupShown) {
+		toggleSignupBtn.style.display = 'none';
+		backToLoginBtn.style.display = 'block';
+	} else {
+		toggleSignupBtn.style.display = 'block';
+		backToLoginBtn.style.display = 'none';
+	}
+}
+
+// ===== РАСЧЁТ И СОХРАНЕНИЕ =====
+async function handleCalculate() {
 	if (!authenticated || !currentUser) {
 		currentResult.textContent = '—';
 		currentNote.textContent = 'Нужно войти, чтобы сохранить результат';
@@ -214,23 +311,54 @@ function handleCalculate() {
 	currentResult.textContent = bf + ' %';
 	currentNote.textContent = group ? group.label : '';
 
-	const entry = {
-		id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-		sex: sexState.current,
-		height: h,
-		neck: n,
-		waist: w,
-		hip: sexState.current === 'female' ? hip : null,
-		bf,
-		group: group ? group.label : '',
-		timestamp: Date.now()
-	};
+	try {
+		const result = await apiCall('/api/history', {
+			method: 'POST',
+			body: JSON.stringify({
+				sex: sexState.current,
+				height: h,
+				neck: n,
+				waist: w,
+				hip: sexState.current === 'female' ? hip : null,
+				bf,
+				group: group ? group.label : ''
+			})
+		});
+		
+		const entry = {
+			id: result.id,
+			sex: result.sex,
+			height: result.height,
+			neck: result.neck,
+			waist: result.waist,
+			hip: result.hip,
+			bf: result.bf,
+			group: result.group,
+			timestamp: new Date(result.timestamp).getTime()
+		};
+		
+		history.push(entry);
+		renderHistory();
+		drawChart();
+		updateLast(entry);
+	} catch (err) {
+		currentNote.textContent = '❌ Ошибка сохранения: ' + err.message;
+	}
+}
 
-	history.push(entry);
-	saveHistory(history, currentUser);
-	renderHistory();
-	drawChart();
-	updateLast(entry);
+async function deleteEntry(id) {
+	try {
+		await apiCall(`/api/history/${id}`, { method: 'DELETE' });
+		const idx = history.findIndex(e => e.id === id);
+		if (idx >= 0) {
+			history.splice(idx, 1);
+		}
+		renderHistory();
+		drawChart();
+		updateLast(history[history.length - 1]);
+	} catch (err) {
+		console.error('Ошибка удаления:', err);
+	}
 }
 
 function renderHistory() {
@@ -268,17 +396,6 @@ function renderHistory() {
 	});
 }
 
-function deleteEntry(id) {
-	const idx = history.findIndex(e => e.id === id);
-	if (idx >= 0) {
-		history.splice(idx, 1);
-		saveHistory(history, currentUser);
-		renderHistory();
-		drawChart();
-		updateLast(history[history.length - 1]);
-	}
-}
-
 function plural(n, forms) {
 	const mod10 = n % 10;
 	const mod100 = n % 100;
@@ -298,6 +415,30 @@ function updateLast(entry) {
 	lastMeta.textContent = `${entry.sex === 'male' ? 'Муж' : 'Жен'}, ${entry.group || ''} • ${dateStr}`;
 }
 
+async function clearHistory() {
+	if (!authenticated || !currentUser) {
+		currentNote.textContent = 'Войди сначала, чтобы очистить историю';
+		return;
+	}
+	
+	if (!confirm('Вы уверены? Это действие необратимо.')) return;
+	
+	try {
+		for (let i = history.length - 1; i >= 0; i--) {
+			await apiCall(`/api/history/${history[i].id}`, { method: 'DELETE' });
+		}
+		history = [];
+		renderHistory();
+		drawChart();
+		updateLast();
+		currentResult.textContent = '—';
+		currentNote.textContent = 'История очищена';
+	} catch (err) {
+		currentNote.textContent = '❌ Ошибка: ' + err.message;
+	}
+}
+
+// ===== ГРАФИК =====
 function resizeCanvas() {
 	const dpr = window.devicePixelRatio || 1;
 	const { width } = chart.getBoundingClientRect();
@@ -429,43 +570,8 @@ function drawChart() {
 	ctx.fillText('Последнее: ' + last.bf + ' %', scaleX(entries.length - 1) - 30, scaleY(last.bf) - 14);
 }
 
-function clearHistory() {
-	if (!authenticated || !currentUser) {
-		currentNote.textContent = 'Войди сначала, чтобы очистить историю';
-		return;
-	}
-	history.splice(0, history.length);
-	saveHistory(history, currentUser);
-	renderHistory();
-	drawChart();
-	updateLast();
-	currentResult.textContent = '—';
-	currentNote.textContent = 'История очищена';
-}
-
-maleBtn.addEventListener('click', () => setSex('male'));
-femaleBtn.addEventListener('click', () => setSex('female'));
-calcBtn.addEventListener('click', handleCalculate);
-clearBtn.addEventListener('click', clearHistory);
-loginBtn.addEventListener('click', () => {
-	handleLogin();
-	closeModal();
-});
-logoutBtn.addEventListener('click', handleLogout);
-
-// Функции для управления паролем
-function getPassword(userId) {
-	const customPassword = localStorage.getItem(`${passwordKey}-${userId}`);
-	if (customPassword) return customPassword;
-	const account = accounts.find(a => a.id === userId);
-	return account ? account.password : '1234';
-}
-
-function setPassword(userId, newPassword) {
-	localStorage.setItem(`${passwordKey}-${userId}`, newPassword);
-}
-
-function handleChangePassword() {
+// ===== СМЕНА ПАРОЛЯ =====
+async function handleChangePassword() {
 	const currentPassword = document.getElementById('currentPassword').value;
 	const newPassword = document.getElementById('newPassword').value;
 	const confirmPassword = document.getElementById('confirmPassword').value;
@@ -473,13 +579,6 @@ function handleChangePassword() {
 	
 	if (!currentPassword || !newPassword || !confirmPassword) {
 		statusEl.textContent = '❌ Заполни все поля';
-		statusEl.style.color = '#ef4444';
-		return;
-	}
-	
-	const actualPassword = getPassword(currentUser);
-	if (currentPassword !== actualPassword) {
-		statusEl.textContent = '❌ Текущий пароль неверный';
 		statusEl.style.color = '#ef4444';
 		return;
 	}
@@ -496,16 +595,25 @@ function handleChangePassword() {
 		return;
 	}
 	
-	setPassword(currentUser, newPassword);
-	statusEl.textContent = '✓ Пароль успешно изменён!';
-	statusEl.style.color = '#86efac';
-	
-	setTimeout(() => {
-		document.getElementById('currentPassword').value = '';
-		document.getElementById('newPassword').value = '';
-		document.getElementById('confirmPassword').value = '';
-		toggleChangePasswordForm();
-	}, 1500);
+	try {
+		await apiCall('/api/change-password', {
+			method: 'POST',
+			body: JSON.stringify({ currentPassword, newPassword })
+		});
+		
+		statusEl.textContent = '✓ Пароль успешно изменён!';
+		statusEl.style.color = '#86efac';
+		
+		setTimeout(() => {
+			document.getElementById('currentPassword').value = '';
+			document.getElementById('newPassword').value = '';
+			document.getElementById('confirmPassword').value = '';
+			toggleChangePasswordForm();
+		}, 1500);
+	} catch (err) {
+		statusEl.textContent = '❌ ' + err.message;
+		statusEl.style.color = '#ef4444';
+	}
 }
 
 function toggleChangePasswordForm() {
@@ -524,64 +632,42 @@ function toggleChangePasswordForm() {
 	}
 }
 
-// Event listeners для смены пароля
+// ===== EVENT LISTENERS =====
+maleBtn.addEventListener('click', () => setSex('male'));
+femaleBtn.addEventListener('click', () => setSex('female'));
+calcBtn.addEventListener('click', handleCalculate);
+clearBtn.addEventListener('click', clearHistory);
+loginBtn.addEventListener('click', () => {
+	handleLogin();
+	closeModal();
+});
+logoutBtn.addEventListener('click', handleLogout);
+signupBtn?.addEventListener('click', handleSignup);
+toggleSignupBtn?.addEventListener('click', toggleSignupForm);
+backToLoginBtn?.addEventListener('click', toggleSignupForm);
+
 document.getElementById('toggleChangePassword')?.addEventListener('click', toggleChangePasswordForm);
 document.getElementById('saveNewPassword')?.addEventListener('click', handleChangePassword);
 document.getElementById('cancelChangePassword')?.addEventListener('click', toggleChangePasswordForm);
 
-// Обновляем функцию входа для использования getPassword
-const originalHandleLogin = handleLogin;
-function handleLogin() {
-	const selectedId = userSelect.value;
-	const account = accounts.find(a => a.id === selectedId);
-	if (!account) return;
-	
-	const actualPassword = getPassword(selectedId);
-	if (passwordInput.value.trim() !== actualPassword) {
-		authenticated = false;
-		currentUser = '';
-		authStatus.textContent = '❌ Пароль неверный. Попробуй 1234.';
-		authStatus.classList.add('status-warn');
-		updateUserBadge();
-		return;
-	}
-
-	authenticated = true;
-	currentUser = account.id;
-	localStorage.setItem(currentUserKey, currentUser);
-	history = loadHistory(currentUser);
-	authStatus.textContent = '✓ Привет, ' + account.label + '! Твои данные сохранятся здесь.';
-	authStatus.classList.remove('status-warn');
-	passwordInput.value = '';
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+(async () => {
+	await loadUserData();
+	setSex('male');
 	updateUserBadge();
 	renderHistory();
-	drawChart();
-	updateLast(history[history.length - 1]);
-}
-
-userSelect.value = currentUser || accounts[0].id;
-if (authenticated && currentUser) {
-	authStatus.textContent = 'Вошли как ' + getUserName(currentUser) + '. История сохранится отдельно.';
-	authStatus.classList.remove('status-warn');
-} else {
-	authStatus.textContent = 'Войдите, чтобы сохранить личную историю.';
-	authStatus.classList.add('status-warn');
-}
-updateUserBadge();
-
-setSex('male');
-renderHistory();
-resizeCanvas();
-drawChart();
-updateLast(authenticated ? history[history.length - 1] : null);
-
-window.addEventListener('resize', () => {
 	resizeCanvas();
 	drawChart();
-});
-
-if ('serviceWorker' in navigator) {
-	window.addEventListener('load', () => {
-		navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+	updateLast(authenticated ? history[history.length - 1] : null);
+	
+	window.addEventListener('resize', () => {
+		resizeCanvas();
+		drawChart();
 	});
-}
+
+	if ('serviceWorker' in navigator) {
+		window.addEventListener('load', () => {
+			navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+		});
+	}
+})();

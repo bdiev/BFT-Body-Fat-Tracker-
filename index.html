@@ -22,40 +22,52 @@
 			<div class="modal-body">
 				<div id="loginForm">
 					<div style="margin-bottom: 16px;">
-						<label for="userSelect" class="label">Выбери себя</label>
-						<select id="userSelect">
-							<option value="bohdan">Bohdan</option>
-							<option value="konstantin">Konstantin</option>
-							<option value="izabella">Izabella</option>
-						</select>
+						<label for="userSelect" class="label">Username</label>
+						<input id="userSelect" type="text" placeholder="Введи свой username" />
 					</div>
 					<div style="margin-bottom: 20px;">
 						<label for="passwordInput" class="label">Пароль</label>
-						<input id="passwordInput" type="password" inputmode="numeric" placeholder="Введи пароль" />
+						<input id="passwordInput" type="password" placeholder="Введи пароль" />
 					</div>
-					<p class="muted" id="authStatus" style="margin: 0 0 16px; font-size: 13px;">Твои данные останутся при тебе — только локально.</p>
+					<p class="muted" id="authStatus" style="margin: 0 0 16px; font-size: 13px;">Твои данные защищены и хранятся на сервере.</p>
+				</div>
+				
+				<div id="signupForm" style="display: none;">
+					<div style="margin-bottom: 16px;">
+						<label for="signupUsername" class="label">Придумай username</label>
+						<input id="signupUsername" type="text" placeholder="Например, bohdan123" />
+					</div>
+					<div style="margin-bottom: 16px;">
+						<label for="signupEmail" class="label">Email (опционально)</label>
+						<input id="signupEmail" type="email" placeholder="Например, bohdan@example.com" />
+					</div>
+					<div style="margin-bottom: 20px;">
+						<label for="signupPassword" class="label">Пароль</label>
+						<input id="signupPassword" type="password" placeholder="Не менее 4 символов" />
+					</div>
+					<p class="muted" id="signupStatus" style="margin: 0 0 16px; font-size: 13px;"></p>
 				</div>
 				<div id="logoutForm" style="display: none;">
 					<div id="accountInfo" style="text-align: center; margin-bottom: 20px;">
 						<p style="font-size: 32px; margin: 0 0 12px;">✓</p>
 						<p class="label" style="margin: 0; font-size: 16px;">Ты вошёл как</p>
 						<p style="font-size: 24px; font-weight: 700; margin: 8px 0 16px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;" id="userDisplayName">User</p>
-						<p class="muted" style="margin: 0; font-size: 13px;">Твои данные сохраняются локально</p>
+						<p class="muted" style="margin: 0; font-size: 13px;">Твои данные сохраняются безопасно на сервере</p>
 					</div>
 					
 					<div id="changePasswordForm" style="display: none; text-align: left;">
 						<h3 style="margin: 0 0 16px; font-size: 16px; font-weight: 600;">Смена пароля</h3>
 						<div style="margin-bottom: 14px;">
 							<label for="currentPassword" class="label">Текущий пароль</label>
-							<input id="currentPassword" type="password" inputmode="numeric" placeholder="Введи текущий пароль" />
+							<input id="currentPassword" type="password" placeholder="Введи текущий пароль" />
 						</div>
 						<div style="margin-bottom: 14px;">
 							<label for="newPassword" class="label">Новый пароль</label>
-							<input id="newPassword" type="password" inputmode="numeric" placeholder="Придумай новый пароль" />
+							<input id="newPassword" type="password" placeholder="Придумай новый пароль" />
 						</div>
 						<div style="margin-bottom: 16px;">
 							<label for="confirmPassword" class="label">Подтверди пароль</label>
-							<input id="confirmPassword" type="password" inputmode="numeric" placeholder="Повтори новый пароль" />
+							<input id="confirmPassword" type="password" placeholder="Повтори новый пароль" />
 						</div>
 						<p class="muted" id="passwordChangeStatus" style="margin: 0 0 16px; font-size: 12px; text-align: center;"></p>
 						<div style="display: flex; gap: 8px;">
@@ -71,7 +83,10 @@
 			</div>
 			<div class="modal-footer">
 				<button class="ghost" id="logoutBtn">Выйти</button>
+				<button class="ghost" id="backToLogin" style="display: none;">Назад к входу</button>
+				<button class="ghost" id="toggleSignup">Создать аккаунт</button>
 				<button class="primary" id="loginBtn">Войти</button>
+				<button class="primary" id="signupBtn" style="display: none;">Создать</button>
 			</div>
 		</div>
 	</div>
