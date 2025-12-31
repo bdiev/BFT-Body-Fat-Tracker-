@@ -193,19 +193,33 @@ async function handleSignup() {
 	}
 	
 	try {
+		status.textContent = '⏳ Создаю аккаунт...';
+		status.style.color = '#a5b4fc';
+		
 		const result = await apiCall('/api/signup', {
 			method: 'POST',
 			body: JSON.stringify({ username, email: email || null, password })
 		});
 		
-		status.textContent = '✓ ' + result.message;
+		// Даём браузеру время обработать cookies
+		await new Promise(resolve => setTimeout(resolve, 100));
+		
+		// Загружаем данные пользователя
+		const loaded = await loadUserData();
+		if (!loaded) {
+			status.textContent = '❌ Ошибка загрузки данных';
+			status.style.color = '#ef4444';
+			return;
+		}
+		
+		status.textContent = '✓ Аккаунт создан! Добро пожаловать!';
 		status.style.color = '#86efac';
 		
 		signupUsernameInput.value = '';
 		signupEmailInput.value = '';
 		signupPasswordInput.value = '';
 		
-		await loadUserData();
+		userSelect.value = currentUser;
 		updateUserBadge();
 		renderHistory();
 		drawChart();
@@ -231,19 +245,36 @@ async function handleLogin() {
 	}
 	
 	try {
+		authStatus.textContent = '⏳ Проверяю данные...';
+		authStatus.classList.remove('status-warn');
+		
 		const result = await apiCall('/api/login', {
 			method: 'POST',
 			body: JSON.stringify({ username, password })
 		});
 		
-		await loadUserData();
-		authStatus.textContent = '✓ Привет, ' + currentUser + '! Твои данные сохранены на сервере.';
+		// Даём браузеру время обработать cookies
+		await new Promise(resolve => setTimeout(resolve, 100));
+		
+		// Загружаем данные пользователя
+		const loaded = await loadUserData();
+		if (!loaded) {
+			authStatus.textContent = '❌ Ошибка загрузки данных';
+			authStatus.classList.add('status-warn');
+			return;
+		}
+		
+		authStatus.textContent = '✓ Привет, ' + currentUser + '! Твои данные загружены.';
 		authStatus.classList.remove('status-warn');
 		passwordInput.value = '';
+		userSelect.value = currentUser;
 		updateUserBadge();
 		renderHistory();
 		drawChart();
 		updateLast(history[history.length - 1]);
+		
+		// Закрываем модаль после успешного входа
+		setTimeout(() => closeModal(), 500);
 	} catch (err) {
 		authStatus.textContent = '❌ ' + err.message;
 		authStatus.classList.add('status-warn');
@@ -639,7 +670,6 @@ calcBtn.addEventListener('click', handleCalculate);
 clearBtn.addEventListener('click', clearHistory);
 loginBtn.addEventListener('click', () => {
 	handleLogin();
-	closeModal();
 });
 logoutBtn.addEventListener('click', handleLogout);
 signupBtn?.addEventListener('click', handleSignup);
