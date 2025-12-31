@@ -309,11 +309,18 @@ function toggleSignupForm() {
 	signupForm.style.display = isSignupShown ? 'none' : 'block';
 	loginForm.style.display = isSignupShown ? 'block' : 'none';
 	
+	// Показываем/скрываем правильные кнопки
 	if (!isSignupShown) {
+		// Переходим на форму регистрации
+		loginBtn.style.display = 'none';
 		toggleSignupBtn.style.display = 'none';
+		signupBtn.style.display = '';
 		backToLoginBtn.style.display = 'block';
 	} else {
+		// Возвращаемся на форму входа
+		loginBtn.style.display = '';
 		toggleSignupBtn.style.display = 'block';
+		signupBtn.style.display = 'none';
 		backToLoginBtn.style.display = 'none';
 	}
 }
