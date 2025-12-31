@@ -15,8 +15,12 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 app.use(cookieParser());
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: function (origin, callback) {
+    callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type']
 }));
 
 // Инициализация БД
@@ -97,8 +101,8 @@ app.post('/api/signup', async (req, res) => {
       const token = jwt.sign({ id: this.lastID, username }, JWT_SECRET, { expiresIn: '30d' });
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'Strict',
+        secure: false,
+        sameSite: 'Lax',
         maxAge: 30 * 24 * 60 * 60 * 1000
       });
       
@@ -134,8 +138,8 @@ app.post('/api/login', (req, res) => {
       const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'Strict',
+        secure: false,
+        sameSite: 'Lax',
         maxAge: 30 * 24 * 60 * 60 * 1000
       });
       
