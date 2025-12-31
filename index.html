@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Body Fat Tracker</title>
+	<meta name="theme-color" content="#0f1116" />
+	<link rel="manifest" href="./manifest.json" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+	<style>
+		:root {
+			--bg: #0a0c12;
+			--panel: rgba(18, 20, 28, 0.8);
+			--panel-strong: rgba(16, 18, 26, 0.92);
+			--accent: #0a84ff;
+			--accent-2: #5ac8fa;
+			--muted: #98a2b3;
+			--text: #f4f6fb;
+			--danger: #ff8fa3;
+			--shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+			--radius: 20px;
+			--border: 1px solid rgba(255, 255, 255, 0.06);
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			font-family: 'SF Pro Display', -apple-system, system-ui, 'Segoe UI', sans-serif;
+			color: var(--text);
+			background:
+				radial-gradient(1200px at 20% 20%, rgba(90, 200, 250, 0.12), transparent 40%),
+				radial-gradient(900px at 80% 0%, rgba(10, 132, 255, 0.18), transparent 45%),
+				linear-gradient(160deg, #0b0d14 0%, #0a0c12 45%, #07090f 100%);
+			padding: 32px 18px 48px;
+		}
+
+		.wrap {
+			max-width: 1180px;
+			margin: 0 auto;
+			display: grid;
+			gap: 20px;
+		}
+
+		header {
+			display: flex;
+			gap: 16px;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+		}
+
+		.title {
+			font-size: clamp(24px, 4vw, 34px);
+			font-weight: 700;
+			letter-spacing: -0.03em;
+			margin: 0;
+		}
+
+		.subtitle {
+			color: var(--muted);
+			margin: 6px 0 0;
+			max-width: 620px;
+			line-height: 1.4;
+		}
+
+		.pill {
+			background: rgba(255, 255, 255, 0.08);
+			padding: 10px 16px;
+			border-radius: 999px;
+			border: 1px solid rgba(255, 255, 255, 0.12);
+			color: var(--text);
+			font-weight: 600;
+			letter-spacing: 0.01em;
+			box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+			backdrop-filter: blur(12px);
+		}
+
+		.grid {
+			display: grid;
+			gap: 20px;
+			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+		}
+
+		.card {
+			background: var(--panel);
+			border: var(--border);
+			border-radius: var(--radius);
+			padding: 20px;
+			box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+			backdrop-filter: blur(14px) saturate(140%);
+		}
+
+		.card strong { color: var(--text); }
+
+		.stat {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.stat .label {
+			color: var(--muted);
+			font-size: 13px;
+			letter-spacing: 0.01em;
+		}
+
+		.stat .value {
+			font-size: 28px;
+			font-weight: 700;
+		}
+
+		.inputs {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+			gap: 12px;
+			margin-top: 12px;
+		}
+
+		label {
+			display: block;
+			font-weight: 500;
+			margin-bottom: 6px;
+			color: var(--text);
+		}
+
+		input, select, button {
+			font-family: inherit;
+		}
+
+		input {
+			width: 100%;
+			padding: 12px;
+			border-radius: 14px;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+			color: var(--text);
+			outline: none;
+			transition: border-color 0.2s, transform 0.1s, box-shadow 0.2s;
+			box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+		}
+
+		input:focus {
+			border-color: rgba(10, 132, 255, 0.65);
+			box-shadow: 0 0 0 6px rgba(10, 132, 255, 0.12);
+			transform: translateY(-1px);
+		}
+
+		.segmented {
+			display: inline-flex;
+			padding: 6px;
+			border-radius: 16px;
+			border: 1px solid rgba(255, 255, 255, 0.12);
+			background: rgba(255, 255, 255, 0.06);
+			gap: 6px;
+			backdrop-filter: blur(12px) saturate(160%);
+		}
+
+		.segmented button {
+			border: none;
+			padding: 10px 18px;
+			border-radius: 12px;
+			color: var(--text);
+			background: transparent;
+			cursor: pointer;
+			transition: background 0.2s, transform 0.1s, color 0.2s, box-shadow 0.2s;
+			font-weight: 700;
+			letter-spacing: 0.01em;
+		}
+
+		.segmented button.active {
+			background: linear-gradient(135deg, rgba(10, 132, 255, 0.95), rgba(90, 200, 250, 0.85));
+			box-shadow: 0 6px 16px rgba(10, 132, 255, 0.35);
+			transform: translateY(-1px);
+			color: #0b0d12;
+		}
+
+		.actions {
+			display: flex;
+			gap: 12px;
+			flex-wrap: wrap;
+			margin-top: 16px;
+		}
+
+		.primary, .ghost {
+			border: none;
+			padding: 14px 18px;
+			border-radius: 12px;
+			cursor: pointer;
+			font-weight: 700;
+			letter-spacing: 0.01em;
+			transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+		}
+
+		.primary {
+			background: linear-gradient(135deg, #0a84ff, #5ac8fa);
+			color: #0a0c12;
+			box-shadow: 0 12px 28px rgba(10, 132, 255, 0.28);
+		}
+
+		.primary:active, .ghost:active { transform: translateY(1px); }
+
+		.ghost {
+			background: rgba(255, 255, 255, 0.06);
+			border: 1px solid rgba(255, 255, 255, 0.12);
+			color: var(--text);
+			box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+		}
+
+		.result {
+			display: flex;
+			gap: 14px;
+			align-items: center;
+			margin-top: 14px;
+			padding: 16px;
+			border-radius: 16px;
+			background: rgba(255, 255, 255, 0.05);
+			border: 1px solid rgba(255, 255, 255, 0.08);
+			box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+			backdrop-filter: blur(10px) saturate(130%);
+		}
+
+		.result .number { font-size: 32px; font-weight: 700; }
+		.muted { color: var(--muted); }
+
+		.history {
+			display: grid;
+			gap: 10px;
+			max-height: 260px;
+			overflow: auto;
+			padding-right: 6px;
+		}
+
+		.history-item {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			gap: 8px;
+			padding: 12px;
+			border-radius: 14px;
+			background: rgba(255, 255, 255, 0.05);
+			border: 1px solid rgba(255, 255, 255, 0.08);
+			box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+			backdrop-filter: blur(10px) saturate(130%);
+		}
+
+		.history-item strong { color: var(--text); }
+		.history-item small { color: var(--muted); }
+
+		canvas { width: 100%; height: 280px; border-radius: 16px; background: #0b0e16; }
+
+		@media (max-width: 720px) {
+			body { padding: 24px 14px 40px; }
+			.actions { flex-direction: column; }
+			.segmented { width: 100%; }
+			.segmented button { flex: 1; text-align: center; }
+		}
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<header>
+			<div>
+				<p class="pill">PWA • Offline ready</p>
+				<h1 class="title">Трекер процента жира</h1>
+				<p class="subtitle">Считайте процент жира по формуле US Navy, переключайте мужскую/женскую формулу, сохраняйте историю локально и отслеживайте динамику на графике.</p>
+			</div>
+			<div class="stat card" style="min-width: 220px;">
+				<span class="label">Последний результат</span>
+				<span class="value" id="last-result">—</span>
+				<span class="muted" id="last-meta">Нет данных</span>
+			</div>
+		</header>
+
+		<section class="grid">
+			<div class="card" id="form-card">
+				<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap;">
+					<div>
+						<strong>Формула</strong>
+						<p class="muted" style="margin:4px 0 0;">Выберите пол для расчёта</p>
+					</div>
+					<div class="segmented" role="group" aria-label="Пол">
+						<button id="maleBtn" class="active" type="button">Мужчина</button>
+						<button id="femaleBtn" type="button">Женщина</button>
+					</div>
+				</div>
+
+				<div class="inputs">
+					<div>
+						<label for="height">Рост (см)</label>
+						<input id="height" type="number" inputmode="decimal" placeholder="Например, 178" />
+					</div>
+					<div>
+						<label for="neck">Обхват шеи (см)</label>
+						<input id="neck" type="number" inputmode="decimal" placeholder="Например, 38" />
+					</div>
+					<div>
+						<label for="waist">Обхват талии (см)</label>
+						<input id="waist" type="number" inputmode="decimal" placeholder="Например, 82" />
+					</div>
+					<div id="hip-wrap" style="display:none;">
+						<label for="hip">Обхват бёдер (см)</label>
+						<input id="hip" type="number" inputmode="decimal" placeholder="Только для женщин" />
+					</div>
+				</div>
+
+				<div class="actions">
+					<button class="primary" id="calcBtn" type="button">Рассчитать и сохранить</button>
+					<button class="ghost" id="clearBtn" type="button">Очистить историю</button>
+				</div>
+
+				<div class="result" aria-live="polite">
+					<div>
+						<div class="muted">Текущий расчёт</div>
+						<div class="number" id="current-result">—</div>
+					</div>
+					<div class="muted" id="current-note">Введите данные выше</div>
+				</div>
+			</div>
+
+			<div class="card">
+				<div style="display:flex; justify-content: space-between; align-items:center;">
+					<strong>История</strong>
+					<span class="muted" id="history-count">0 записей</span>
+				</div>
+				<div class="history" id="history"></div>
+			</div>
+		</section>
+
+		<section class="card">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap;">
+				<div>
+					<strong>График изменения жира</strong>
+					<p class="muted" style="margin:4px 0 0;">Каждая точка — сохранённый расчёт</p>
+				</div>
+			</div>
+			<canvas id="chart" height="280"></canvas>
+		</section>
+	</div>
+
+	<script>
+		const sexState = { current: 'male' };
+		const historyKey = 'bf-history-v1';
+		const history = loadHistory();
+
+		const maleBtn = document.getElementById('maleBtn');
+		const femaleBtn = document.getElementById('femaleBtn');
+		const hipWrap = document.getElementById('hip-wrap');
+		const calcBtn = document.getElementById('calcBtn');
+		const clearBtn = document.getElementById('clearBtn');
+		const historyList = document.getElementById('history');
+		const historyCount = document.getElementById('history-count');
+		const currentResult = document.getElementById('current-result');
+		const currentNote = document.getElementById('current-note');
+		const lastResult = document.getElementById('last-result');
+		const lastMeta = document.getElementById('last-meta');
+		const chart = document.getElementById('chart');
+		const ctx = chart.getContext('2d');
+		let viewW = 0;
+		let viewH = 0;
+		const maxPoints = 24;
+		const chartHeight = 320;
+
+		function loadHistory() {
+			try {
+				const raw = localStorage.getItem(historyKey);
+				return raw ? JSON.parse(raw) : [];
+			} catch (e) {
+				return [];
+			}
+		}
+
+		function saveHistory(list) {
+			localStorage.setItem(historyKey, JSON.stringify(list));
+		}
+
+		function setSex(sex) {
+			sexState.current = sex;
+			maleBtn.classList.toggle('active', sex === 'male');
+			femaleBtn.classList.toggle('active', sex === 'female');
+			hipWrap.style.display = sex === 'female' ? 'block' : 'none';
+			currentNote.textContent = sex === 'female'
+				? 'Формула для женщин: талия + бёдра - шея'
+				: 'Формула для мужчин: талия - шея';
+		}
+
+		function calcBodyFat(sex, height, neck, waist, hip) {
+			if (sex === 'male') {
+				return 86.010 * Math.log10(waist - neck) - 70.041 * Math.log10(height) + 36.76;
+			}
+			return 163.205 * Math.log10(waist + hip - neck) - 97.684 * Math.log10(height) - 78.387;
+		}
+
+		function classify(bf, sex) {
+			const ranges = sex === 'male'
+				? [ { max: 6, label: 'Соревновательный', tone: 'sharp' },
+						{ max: 13, label: 'Атлет', tone: 'good' },
+						{ max: 17, label: 'Фитнес', tone: 'good' },
+						{ max: 24, label: 'Норма', tone: 'ok' },
+						{ max: 100, label: 'Высокий', tone: 'warn' } ]
+				: [ { max: 14, label: 'Соревновательный', tone: 'sharp' },
+						{ max: 20, label: 'Атлет', tone: 'good' },
+						{ max: 24, label: 'Фитнес', tone: 'good' },
+						{ max: 31, label: 'Норма', tone: 'ok' },
+						{ max: 100, label: 'Высокий', tone: 'warn' } ];
+			return ranges.find(r => bf <= r.max);
+		}
+
+		function handleCalculate() {
+			const h = parseFloat(document.getElementById('height').value);
+			const n = parseFloat(document.getElementById('neck').value);
+			const w = parseFloat(document.getElementById('waist').value);
+			const hip = parseFloat(document.getElementById('hip').value);
+
+			if (!h || !n || !w || h <= 0 || n <= 0 || w <= 0 || (sexState.current === 'female' && (!hip || hip <= 0))) {
+				currentResult.textContent = '—';
+				currentNote.textContent = 'Проверьте, что все поля заполнены корректно';
+				return;
+			}
+
+			const bf = parseFloat(calcBodyFat(sexState.current, h, n, w, hip).toFixed(1));
+			const group = classify(bf, sexState.current);
+			currentResult.textContent = bf + ' %';
+			currentNote.textContent = group ? group.label : '';
+
+			const entry = {
+				id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+				sex: sexState.current,
+				height: h,
+				neck: n,
+				waist: w,
+				hip: sexState.current === 'female' ? hip : null,
+				bf,
+				group: group ? group.label : '',
+				timestamp: Date.now()
+			};
+
+			history.push(entry);
+			saveHistory(history);
+			renderHistory();
+			drawChart();
+			updateLast(entry);
+		}
+
+		function renderHistory() {
+			historyList.innerHTML = '';
+			const sorted = [...history].sort((a, b) => b.timestamp - a.timestamp);
+			historyCount.textContent = sorted.length + ' ' + plural(sorted.length, ['запись', 'записи', 'записей']);
+
+			if (!sorted.length) {
+				historyList.innerHTML = '<p class="muted">История пока пустая.</p>';
+				return;
+			}
+
+			sorted.forEach(item => {
+				const row = document.createElement('div');
+				row.className = 'history-item';
+				const date = new Date(item.timestamp);
+				const dateStr = date.toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+				row.innerHTML = `
+					<div>
+						<strong>${item.bf}%</strong> <small>${item.group}</small><br />
+						<small>${item.sex === 'male' ? 'Муж' : 'Жен'}, рост ${item.height} см</small>
+					</div>
+					<div style="text-align:right;">
+						<small>${dateStr}</small>
+						<button aria-label="Удалить" style="margin-top:6px; background:none; border:1px solid rgba(255,255,255,0.08); color:var(--muted); padding:6px 10px; border-radius:10px; cursor:pointer;">Удалить</button>
+					</div>`;
+				row.querySelector('button').addEventListener('click', () => deleteEntry(item.id));
+				historyList.appendChild(row);
+			});
+		}
+
+		function deleteEntry(id) {
+			const idx = history.findIndex(e => e.id === id);
+			if (idx >= 0) {
+				history.splice(idx, 1);
+				saveHistory(history);
+				renderHistory();
+				drawChart();
+				updateLast(history[history.length - 1]);
+			}
+		}
+
+		function plural(n, forms) {
+			const mod10 = n % 10;
+			const mod100 = n % 100;
+			if (mod10 === 1 && mod100 !== 11) return forms[0];
+			if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return forms[1];
+			return forms[2];
+		}
+
+		function updateLast(entry) {
+			if (!entry) {
+				lastResult.textContent = '—';
+				lastMeta.textContent = 'Нет данных';
+				return;
+			}
+			const dateStr = new Date(entry.timestamp).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+			lastResult.textContent = entry.bf + ' %';
+			lastMeta.textContent = `${entry.sex === 'male' ? 'Муж' : 'Жен'}, ${entry.group || ''} • ${dateStr}`;
+		}
+
+		function resizeCanvas() {
+			const dpr = window.devicePixelRatio || 1;
+			const { width } = chart.getBoundingClientRect();
+			chart.width = Math.max(320, Math.round(width * dpr));
+			chart.height = Math.round(chartHeight * dpr);
+			chart.style.width = '100%';
+			chart.style.height = chartHeight + 'px';
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.scale(dpr, dpr);
+			viewW = chart.width / dpr;
+			viewH = chart.height / dpr;
+		}
+
+		function drawChart() {
+			const ordered = [...history].sort((a, b) => a.timestamp - b.timestamp);
+			const entries = ordered.slice(Math.max(0, ordered.length - maxPoints));
+			ctx.clearRect(0, 0, viewW, viewH);
+
+			ctx.fillStyle = '#0b0e16';
+			ctx.fillRect(0, 0, viewW, viewH);
+
+			if (entries.length < 2) {
+				ctx.fillStyle = '#9aa7bd';
+				ctx.font = '16px "SF Pro Display"';
+				ctx.fillText('Добавьте 2+ записей, чтобы увидеть динамику', 20, 40);
+				return;
+			}
+
+			const padding = 64;
+			const ys = entries.map(e => e.bf);
+			const minYRaw = Math.min(...ys);
+			const maxYRaw = Math.max(...ys);
+			const span = Math.max(4, maxYRaw - minYRaw);
+			const padY = span * 0.22;
+			const minY = Math.max(0, minYRaw - padY);
+			const maxY = Math.min(60, maxYRaw + padY);
+
+			const count = entries.length;
+			const usableW = viewW - padding * 2;
+			const stepX = count > 1 ? usableW / (count - 1) : 0;
+			const scaleX = i => padding + i * stepX;
+			const scaleY = v => viewH - padding - ((v - minY) / (maxY - minY || 1)) * (viewH - padding * 2);
+
+			ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(padding, padding - 10);
+			ctx.lineTo(padding, viewH - padding);
+			ctx.lineTo(viewW - padding + 10, viewH - padding);
+			ctx.stroke();
+
+			const ySteps = 5;
+			ctx.fillStyle = '#8f9bb2';
+			ctx.font = '11px "SF Pro Display"';
+			for (let i = 0; i <= ySteps; i++) {
+				const yVal = minY + (i / ySteps) * (maxY - minY);
+				const y = scaleY(yVal);
+				ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+				ctx.beginPath();
+				ctx.moveTo(padding, y);
+				ctx.lineTo(viewW - padding, y);
+				ctx.stroke();
+				ctx.fillText(yVal.toFixed(0) + ' %', 14, y + 4);
+			}
+
+			const xStepShow = Math.max(1, Math.floor(count / 6));
+			ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+			for (let i = 0; i < count; i += xStepShow) {
+				const x = scaleX(i);
+				ctx.beginPath();
+				ctx.moveTo(x, padding);
+				ctx.lineTo(x, viewH - padding + 6);
+				ctx.stroke();
+			}
+
+			const accent = 'rgba(10, 132, 255, 0.9)';
+			const area = ctx.createLinearGradient(0, padding, 0, viewH - padding);
+			area.addColorStop(0, 'rgba(10,132,255,0.24)');
+			area.addColorStop(1, 'rgba(10,132,255,0.05)');
+
+			ctx.beginPath();
+			entries.forEach((e, i) => {
+				const x = scaleX(i);
+				const y = scaleY(e.bf);
+				if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+			});
+			ctx.strokeStyle = accent;
+			ctx.lineWidth = 3;
+			ctx.lineJoin = 'round';
+			ctx.lineCap = 'round';
+			ctx.stroke();
+
+			ctx.lineTo(scaleX(entries.length - 1), viewH - padding);
+			ctx.lineTo(scaleX(0), viewH - padding);
+			ctx.closePath();
+			ctx.fillStyle = area;
+			ctx.fill();
+
+			entries.forEach((e, i) => {
+				const x = scaleX(i);
+				const y = scaleY(e.bf);
+				const grad = ctx.createRadialGradient(x, y, 0, x, y, 14);
+				grad.addColorStop(0, 'rgba(10,132,255,0.95)');
+				grad.addColorStop(1, 'rgba(10,132,255,0.12)');
+				ctx.fillStyle = grad;
+				ctx.beginPath();
+				ctx.arc(x, y, 8, 0, Math.PI * 2);
+				ctx.fill();
+			});
+
+			ctx.fillStyle = '#8f9bb2';
+			ctx.font = '11px "SF Pro Display"';
+			for (let i = 0; i < entries.length; i += xStepShow) {
+				const x = scaleX(i);
+				const label = new Date(entries[i].timestamp).toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' });
+				ctx.fillText(label, x - 18, viewH - padding + 18);
+			}
+
+			ctx.fillStyle = '#9aa7bd';
+			ctx.font = '12px "SF Pro Display"';
+			const last = entries[entries.length - 1];
+			ctx.fillText('Последнее: ' + last.bf + ' %', scaleX(entries.length - 1) - 30, scaleY(last.bf) - 14);
+		}
+
+		function clearHistory() {
+			history.splice(0, history.length);
+			saveHistory(history);
+			renderHistory();
+			drawChart();
+			updateLast();
+			currentResult.textContent = '—';
+			currentNote.textContent = 'История очищена';
+		}
+
+		maleBtn.addEventListener('click', () => setSex('male'));
+		femaleBtn.addEventListener('click', () => setSex('female'));
+		calcBtn.addEventListener('click', handleCalculate);
+		clearBtn.addEventListener('click', clearHistory);
+
+		setSex('male');
+		renderHistory();
+		resizeCanvas();
+		drawChart();
+		updateLast(history[history.length - 1]);
+
+		window.addEventListener('resize', () => {
+			resizeCanvas();
+			drawChart();
+		});
+
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+			});
+		}
+	</script>
+</body>
+</html>
