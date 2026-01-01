@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 
 const app = express();
@@ -34,9 +35,26 @@ app.use(cors({
 }));
 
 // Инициализация БД
+// Гарантируем, что директория для файла БД существует (полезно при монтировании volume)
+try {
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+} catch (e) {
+  console.error('Не удалось создать директорию для БД:', path.dirname(DB_PATH), e.message);
+}
+
 const db = new sqlite3.Database(DB_PATH, (err) => {
-  if (err) console.error('Ошибка БД:', err);
-  else console.log('SQLite БД подключена по пути:', DB_PATH);
+  if (err) {
+    console.error('Ошибка БД при подключении:', err.message);
+  } else {
+    let size = 'unknown';
+    try {
+      const stat = fs.statSync(DB_PATH);
+      size = stat.size + ' bytes';
+    } catch (e) {
+      size = 'не удалось прочитать размер';
+    }
+    console.log('✓ SQLite БД подключена. Путь:', DB_PATH, '| Размер:', size);
+  }
 });
 
 // Создание таблиц
@@ -188,11 +206,18 @@ app.get('/api/me', authenticateToken, (req, res) => {
 // Получить историю пользователя
 app.get('/api/history', authenticateToken, (req, res) => {
   db.all(
-    'SELECT id, sex, height, neck, waist, hip, bf, \`group\`, timestamp FROM entries WHERE user_id = ? ORDER BY timestamp DESC',
+    'SELECT id, sex, height, neck, waist, hip, bf, `group`, timestamp FROM entries WHERE user_id = ? ORDER BY timestamp DESC',
     [req.userId],
     (err, rows) => {
       if (err) return res.status(500).json({ error: 'Ошибка БД' });
-      res.json(rows || []);
+
+      // SQLite CURRENT_TIMESTAMP возвращает UTC без таймзоны, помечаем как UTC и отдаём ISO
+      const normalized = (rows || []).map(r => ({
+        ...r,
+        timestamp: r.timestamp ? new Date(`${r.timestamp}Z`).toISOString() : new Date().toISOString()
+      }));
+
+      res.json(normalized);
     }
   );
 });
