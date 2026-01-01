@@ -964,16 +964,18 @@ canvas {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	z-index: 1001;
+	z-index: 2000;
 	padding: 20px;
 	opacity: 0;
+	visibility: hidden;
 	pointer-events: none;
 	transition: opacity 0.24s ease;
 }
 
 #entryDetailModal.active {
-	opacity: 1;
-	pointer-events: auto;
+	opacity: 1 !important;
+	visibility: visible !important;
+	pointer-events: auto !important;
 }
 
 #entryDetailModal .modal-content {
@@ -982,6 +984,8 @@ canvas {
 	overflow-y: auto;
 	scrollbar-width: thin;
 	scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+	opacity: 1 !important;
+	transform: translateY(0) scale(1) !important;
 }
 
 #entryDetailModal .modal-content::-webkit-scrollbar {
