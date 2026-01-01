@@ -706,69 +706,78 @@ function getRecommendations(bf, sex) {
 	return tips;
 }
 
-function showEntryDetail(entry) {
-	console.log('🎯 showEntryDetail вызвана для записи:', entry);
+function renderEntryDetailContent(entry) {
+	const assessment = getBodyFatAssessment(entry.bf, entry.sex);
+	const recommendations = getRecommendations(entry.bf, entry.sex);
+	const date = new Date(entry.timestamp).toLocaleDateString('ru-RU', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+
+	return `
+		<div style="display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap: wrap;">
+			<div class="meta">${date}</div>
+		</div>
+		<div class="headline">
+			<div class="value" style="color:${assessment.color};">${entry.bf.toFixed(1)}%</div>
+			<div>
+				<div style="font-size:14px; font-weight:600; color:${assessment.color};">${assessment.category}</div>
+				<div class="status">${assessment.status}</div>
+			</div>
+		</div>
+
+		<div style="background: rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:16px; margin-bottom:16px;">
+			<h3>📋 Твои измерения</h3>
+			<div class="grid">
+				<div><div class="chip">Пол</div><div class="chip-value">${entry.sex === 'male' ? 'Мужчина' : 'Женщина'}</div></div>
+				<div><div class="chip">Рост</div><div class="chip-value">${entry.height} см</div></div>
+				<div><div class="chip">Обхват шеи</div><div class="chip-value">${entry.neck} см</div></div>
+				<div><div class="chip">Обхват талии</div><div class="chip-value">${entry.waist} см</div></div>
+				${entry.sex === 'female' ? `<div><div class="chip">Обхват бёдер</div><div class="chip-value">${entry.hip} см</div></div>` : ''}
+			</div>
+		</div>
+
+		<div style="background: rgba(76,175,80,0.08); border:1px solid rgba(76,175,80,0.2); border-radius:12px; padding:16px;">
+			<h3 style="color:#81c784;">💡 Рекомендации</h3>
+			<div class="tips">
+				${recommendations.map(tip => `<div class="tip">${tip}</div>`).join('')}
+			</div>
+		</div>
+	`;
+}
+
+function closeAllEntryDetails() {
+	document.querySelectorAll('.entry-detail-inline').forEach(panel => {
+		panel.style.display = 'none';
+	});
+	document.querySelectorAll('.toggle-detail').forEach(btn => {
+		btn.textContent = '▼';
+		btn.setAttribute('aria-expanded', 'false');
+	});
+}
+
+function showEntryDetail(entry, detailPanel, toggleBtn) {
 	try {
-		const assessment = getBodyFatAssessment(entry.bf, entry.sex);
-		const recommendations = getRecommendations(entry.bf, entry.sex);
-		const date = new Date(entry.timestamp).toLocaleDateString('ru-RU', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-		
-		const detailPanel = document.getElementById('entryDetailInline');
-		if (!detailPanel) {
-			console.error('❌ entryDetailInline не найден в DOM');
-			return;
+		const isOpen = detailPanel.style.display === 'block';
+		closeAllEntryDetails();
+		if (!isOpen) {
+			detailPanel.innerHTML = renderEntryDetailContent(entry);
+			detailPanel.style.display = 'block';
+			toggleBtn.textContent = '▲';
+			toggleBtn.setAttribute('aria-expanded', 'true');
+			// плавный скролл к раскрытой записи
+			detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		}
-
-		detailPanel.innerHTML = `
-			<div style="display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap: wrap;">
-				<div class="meta">${date}</div>
-				<button type="button" class="ghost" style="padding:8px 12px; font-size:12px; line-height:1;" onclick="closeEntryModal()">Скрыть</button>
-			</div>
-			<div class="headline">
-				<div class="value" style="color:${assessment.color};">${entry.bf.toFixed(1)}%</div>
-				<div>
-					<div style="font-size:14px; font-weight:600; color:${assessment.color};">${assessment.category}</div>
-					<div class="status">${assessment.status}</div>
-				</div>
-			</div>
-
-			<div style="background: rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:16px; margin-bottom:16px;">
-				<h3>📋 Твои измерения</h3>
-				<div class="grid">
-					<div><div class="chip">Пол</div><div class="chip-value">${entry.sex === 'male' ? 'Мужчина' : 'Женщина'}</div></div>
-					<div><div class="chip">Рост</div><div class="chip-value">${entry.height} см</div></div>
-					<div><div class="chip">Обхват шеи</div><div class="chip-value">${entry.neck} см</div></div>
-					<div><div class="chip">Обхват талии</div><div class="chip-value">${entry.waist} см</div></div>
-					${entry.sex === 'female' ? `<div><div class="chip">Обхват бёдер</div><div class="chip-value">${entry.hip} см</div></div>` : ''}
-				</div>
-			</div>
-
-			<div style="background: rgba(76,175,80,0.08); border:1px solid rgba(76,175,80,0.2); border-radius:12px; padding:16px;">
-				<h3 style="color:#81c784;">💡 Рекомендации</h3>
-				<div class="tips">
-					${recommendations.map(tip => `<div class="tip">${tip}</div>`).join('')}
-				</div>
-			</div>
-		`;
-
-		detailPanel.style.display = 'block';
-		console.log('✓ Панель деталей показана');
-		// Скролл к деталям для мобильных
-		detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 	} catch (err) {
 		console.error('❌ Ошибка в showEntryDetail:', err);
 	}
 }
 
 function closeEntryModal() {
-	const panel = document.getElementById('entryDetailInline');
-	if (panel) panel.style.display = 'none';
+	closeAllEntryDetails();
 }
 
 // ===== ФУНКЦИИ ДЛЯ ОТСЛЕЖИВАНИЯ ВОДЫ =====
@@ -1138,31 +1147,39 @@ function renderHistory() {
 		const date = new Date(item.timestamp);
 		const dateStr = date.toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 		row.innerHTML = `
-			<div style="flex: 1;">
-				<strong>${item.bf}%</strong> <small>${item.group}</small><br />
-				<small>${item.sex === 'male' ? '♂' : '♀'} ${item.height} см</small>
+			<div style="display:flex; align-items:center; gap:10px; flex:1;">
+				<div style="flex:1;">
+					<strong>${item.bf}%</strong> <small>${item.group}</small><br />
+					<small>${item.sex === 'male' ? '♂' : '♀'} ${item.height} см</small>
+				</div>
+				<button type="button" class="toggle-detail" aria-label="Показать детали" aria-expanded="false" style="background:none; border:1px solid rgba(255,255,255,0.12); color:var(--muted); padding:6px 10px; border-radius:10px; cursor:pointer;">▼</button>
 			</div>
 			<div style="text-align:right;">
 				<small>${dateStr}</small>
 				<button aria-label="Удалить" style="margin-top:6px; background:none; border:1px solid rgba(255,255,255,0.08); color:var(--muted); padding:6px 10px; border-radius:10px; cursor:pointer;">×</button>
 			</div>`;
-		
-		// Клик на строку открывает модаль (но не на кнопку удаления)
+
+		const detailPanel = document.createElement('div');
+		detailPanel.className = 'entry-detail-inline';
+		detailPanel.style.display = 'none';
+
+		// Клик по строке или стрелке раскрывает детали, кроме кнопки удаления
+		const toggleBtn = row.querySelector('.toggle-detail');
 		row.addEventListener('click', (e) => {
+			const isDelete = e.target.tagName === 'BUTTON' && !e.target.classList.contains('toggle-detail');
+			if (isDelete) return;
 			console.log('🖱️ Клик на history-item, target:', e.target.tagName);
-			if (e.target.tagName !== 'BUTTON') {
-				console.log('📘 Вызываю showEntryDetail для item:', item);
-				showEntryDetail(item);
-			}
+			showEntryDetail(item, detailPanel, toggleBtn);
 		});
-		
-		// Клик на кнопку удаления
-		row.querySelector('button').addEventListener('click', (e) => {
+
+		// Кнопка удаления
+		row.querySelector('button[aria-label="Удалить"]').addEventListener('click', (e) => {
 			e.stopPropagation();
 			deleteEntry(item.id);
 		});
-		
+
 		historyList.appendChild(row);
+		historyList.appendChild(detailPanel);
 	});
 }
 
