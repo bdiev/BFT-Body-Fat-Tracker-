@@ -93,101 +93,88 @@
 		</div>
 	</div>
 
-	<div class="divider-v">
-		<!-- Hero секция -->
-		<section class="section hero">
-			<div class="hero__content">
-				<div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; justify-content: center;">
+	<div class="wrap">
+		<header>
+			<div>
+				<div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
 					<p class="pill">Работает везде • Даже без интернета</p>
 					<button class="pill-btn" id="openAuthModal">Войти</button>
 					<span class="pill-badge" id="current-user-pill" style="display:none;"></span>
 				</div>
-				<h1 class="hero__title">Проверь жир</h1>
-				<p class="hero__subtitle">Узнай процент жира по простой формуле. Отслеживай прогресс и смотри как меняется на графике.</p>
-				<button class="primary" style="margin-top: 32px;" onclick="document.querySelector('[data-section=calculator]').scrollIntoView({behavior:'smooth'})">Начать</button>
+				<h1 class="title">Проверь жир</h1>
+				<p class="subtitle">Узнай процент жира по простой формуле. Отслеживай прогресс и смотри как меняется на графике.</p>
 			</div>
-		</section>
+			<div class="stat card" style="min-width: 200px;">
+				<span class="label">Последний результат</span>
+				<span class="value" id="last-result">—</span>
+				<span class="muted" id="last-meta">Нет данных</span>
+			</div>
+		</header>
 
-		<!-- Калькулятор -->
-		<section class="section panel" data-section="calculator">
-			<div class="section-content">
-				<h2 class="section__title">Рассчитай свой процент жира</h2>
-				
-				<div class="split-h">
+		<section class="grid">
+			<div class="card" id="form-card">
+				<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap;">
 					<div>
-						<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 20px;">
-							<div>
-								<strong>Твой пол</strong>
-								<p class="muted" style="margin:4px 0 0;">От этого зависит формула расчёта</p>
-							</div>
-							<div class="segmented" role="group" aria-label="Пол">
-								<button id="maleBtn" class="active" type="button">Мужчина</button>
-								<button id="femaleBtn" type="button">Женщина</button>
-							</div>
-						</div>
-
-						<div class="inputs">
-							<div>
-								<label for="height">Рост (см)</label>
-								<input id="height" type="number" inputmode="decimal" placeholder="Например, 178" />
-							</div>
-							<div>
-								<label for="neck">Обхват шеи (см)</label>
-								<input id="neck" type="number" inputmode="decimal" placeholder="Например, 38" />
-							</div>
-							<div>
-								<label for="waist">Обхват талии (см)</label>
-								<input id="waist" type="number" inputmode="decimal" placeholder="Например, 82" />
-							</div>
-							<div id="hip-wrap" style="display:none;">
-								<label for="hip">Обхват бёдер (см)</label>
-								<input id="hip" type="number" inputmode="decimal" placeholder="Только для женщин" />
-							</div>
-						</div>
-
-						<div class="actions">
-							<button class="primary" id="calcBtn" type="button">Рассчитать и сохранить</button>
-							<button class="ghost" id="clearBtn" type="button">Очистить историю</button>
-						</div>
+						<strong>Твой пол</strong>
+						<p class="muted" style="margin:4px 0 0;">От этого зависит формула расчёта</p>
 					</div>
-
-					<div>
-						<div class="result" aria-live="polite">
-							<div>
-								<div class="muted">Получилось</div>
-								<div class="number" id="current-result">—</div>
-							</div>
-							<div class="muted" id="current-note"></div>
-						</div>
+					<div class="segmented" role="group" aria-label="Пол">
+						<button id="maleBtn" class="active" type="button">Мужчина</button>
+						<button id="femaleBtn" type="button">Женщина</button>
 					</div>
 				</div>
-			</div>
-		</section>
 
-		<!-- График и результаты -->
-		<section class="section panel">
-			<div class="section-content">
-				<h2 class="section__title">Визуально видна траектория</h2>
-				<p class="muted" style="margin:0 0 20px;">Каждая точка — твой расчёт, линия показывает тренд</p>
-				<canvas id="chart" height="280"></canvas>
-			</div>
-		</section>
-
-		<!-- История -->
-		<section class="section panel">
-			<div class="section-content">
-				<h2 class="section__title">История измерений</h2>
-				<div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 20px;">
+				<div class="inputs">
 					<div>
-						<strong>Твой прогресс</strong>
-						<span class="muted" id="history-count" style="display: block; margin-top: 4px;">0 записей</span>
+						<label for="height">Рост (см)</label>
+						<input id="height" type="number" inputmode="decimal" placeholder="Например, 178" />
 					</div>
+					<div>
+						<label for="neck">Обхват шеи (см)</label>
+						<input id="neck" type="number" inputmode="decimal" placeholder="Например, 38" />
+					</div>
+					<div>
+						<label for="waist">Обхват талии (см)</label>
+						<input id="waist" type="number" inputmode="decimal" placeholder="Например, 82" />
+					</div>
+					<div id="hip-wrap" style="display:none;">
+						<label for="hip">Обхват бёдер (см)</label>
+						<input id="hip" type="number" inputmode="decimal" placeholder="Только для женщин" />
+					</div>
+				</div>
+
+				<div class="actions">
+					<button class="primary" id="calcBtn" type="button">Рассчитать и сохранить</button>
+					<button class="ghost" id="clearBtn" type="button">Очистить историю</button>
+				</div>
+
+				<div class="result" aria-live="polite">
+					<div>
+						<div class="muted">Получилось</div>
+						<div class="number" id="current-result">—</div>
+					</div>
+					<div class="muted" id="current-note">Заполни данные выше</div>
+				</div>
+			</div>
+
+			<div class="card">
+				<div style="display:flex; justify-content: space-between; align-items:center;">
+					<strong>Твой прогресс</strong>
+					<span class="muted" id="history-count">0 записей</span>
 				</div>
 				<div class="history" id="history"></div>
 			</div>
 		</section>
 
-		<footer class="footer"></footer>
+		<section class="card">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap;">
+				<div>
+					<strong>Визуально видна траектория</strong>
+					<p class="muted" style="margin:4px 0 0;">Каждая точка — твой расчёт, линия показывает тренд</p>
+				</div>
+			</div>
+			<canvas id="chart" height="280"></canvas>
+		</section>
 	</div>
 
 	<script src="./app.js"></script>
