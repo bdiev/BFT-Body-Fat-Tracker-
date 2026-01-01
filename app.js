@@ -28,8 +28,18 @@ const defaultCardVisibility = () => ({
 	lastResult: true
 });
 
+const defaultCardOrder = () => [
+	'form',
+	'history',
+	'chart',
+	'waterTracker',
+	'waterChart',
+	'lastResult'
+];
+
 let userSettings = {
-	card_visibility: defaultCardVisibility()
+	card_visibility: defaultCardVisibility(),
+	card_order: defaultCardOrder()
 };
 
 // Очередь для оффлайн-запросов
@@ -290,6 +300,22 @@ function normalizeCardVisibility(visibility = {}) {
 	};
 }
 
+function normalizeCardOrder(order = []) {
+	const base = defaultCardOrder();
+	const filtered = (order || []).filter((key) => base.includes(key));
+	const missing = base.filter((key) => !filtered.includes(key));
+	return [...filtered, ...missing];
+}
+
+const cardOrderNames = {
+	form: 'Форма расчёта',
+	history: 'История прогресса',
+	chart: 'График жира',
+	waterTracker: 'Трекер воды',
+	waterChart: 'График воды',
+	lastResult: 'Последний результат'
+};
+
 function toggleCardElement(el, visible) {
 	if (!el) return;
 	el.classList.toggle('hidden-by-pref', !visible);
@@ -303,6 +329,7 @@ function applyCardVisibility() {
 	toggleCardElement(document.getElementById('waterSection'), vis.waterTracker);
 	toggleCardElement(document.getElementById('waterChartSection'), vis.waterChart);
 	toggleCardElement(document.getElementById('last-result-card'), vis.lastResult);
+	applyCardOrder();
 }
 
 function syncCardVisibilityUI() {
@@ -319,6 +346,94 @@ function syncCardVisibilityUI() {
 		const el = document.getElementById(id);
 		if (el) el.checked = !!vis[key];
 	});
+	renderCardOrderEditor();
+}
+
+function applyCardOrder() {
+	const order = normalizeCardOrder(userSettings.card_order);
+	const idMap = {
+		form: 'form-card',
+		history: 'history-card',
+		chart: 'chart-section',
+		waterTracker: 'waterSection',
+		waterChart: 'waterChartSection',
+		lastResult: 'last-result-card'
+	};
+	order.forEach((key, idx) => {
+		const elId = idMap[key];
+		if (!elId) return;
+		const el = document.getElementById(elId);
+		if (el) el.style.order = idx;
+	});
+}
+
+function renderCardOrderEditor() {
+	const list = document.getElementById('cardOrderList');
+	if (!list) return;
+	const order = normalizeCardOrder(userSettings.card_order);
+	list.innerHTML = '';
+	order.forEach((key, idx) => {
+		const li = document.createElement('li');
+		li.style.display = 'flex';
+		li.style.alignItems = 'center';
+		li.style.justifyContent = 'space-between';
+		li.style.gap = '8px';
+		li.style.padding = '8px 10px';
+		li.style.border = '1px solid rgba(99, 102, 241, 0.2)';
+		li.style.borderRadius = '10px';
+		li.style.background = 'rgba(99, 102, 241, 0.05)';
+
+		const label = document.createElement('span');
+		label.textContent = cardOrderNames[key] || key;
+		label.style.fontWeight = '600';
+		label.style.color = 'var(--text-dark)';
+
+		const controls = document.createElement('div');
+		controls.style.display = 'flex';
+		controls.style.gap = '6px';
+
+		const upBtn = document.createElement('button');
+		upBtn.type = 'button';
+		upBtn.textContent = '↑';
+		upBtn.style.padding = '6px 10px';
+		upBtn.style.borderRadius = '8px';
+		upBtn.style.border = '1px solid rgba(99, 102, 241, 0.25)';
+		upBtn.style.background = 'rgba(99, 102, 241, 0.12)';
+		upBtn.style.color = '#a5b4fc';
+		upBtn.style.cursor = idx === 0 ? 'not-allowed' : 'pointer';
+		upBtn.disabled = idx === 0;
+		upBtn.addEventListener('click', () => moveCardOrder(key, -1));
+
+		const downBtn = document.createElement('button');
+		downBtn.type = 'button';
+		downBtn.textContent = '↓';
+		downBtn.style.padding = '6px 10px';
+		downBtn.style.borderRadius = '8px';
+		downBtn.style.border = '1px solid rgba(99, 102, 241, 0.25)';
+		downBtn.style.background = 'rgba(99, 102, 241, 0.12)';
+		downBtn.style.color = '#a5b4fc';
+		downBtn.style.cursor = idx === order.length - 1 ? 'not-allowed' : 'pointer';
+		downBtn.disabled = idx === order.length - 1;
+		downBtn.addEventListener('click', () => moveCardOrder(key, 1));
+
+		controls.appendChild(upBtn);
+		controls.appendChild(downBtn);
+		li.appendChild(label);
+		li.appendChild(controls);
+		list.appendChild(li);
+	});
+}
+
+function moveCardOrder(key, direction) {
+	const order = normalizeCardOrder(userSettings.card_order);
+	const idx = order.indexOf(key);
+	const target = idx + direction;
+	if (idx === -1 || target < 0 || target >= order.length) return;
+	[order[idx], order[target]] = [order[target], order[idx]];
+	userSettings.card_order = order;
+	applyCardOrder();
+	renderCardOrderEditor();
+	saveUserSettings({}, order);
 }
 
 function setCardVisibilityStatus(message, tone = 'muted') {
@@ -332,26 +447,32 @@ async function loadUserSettings() {
 	try {
 		const settings = await apiCall('/api/user-settings');
 		userSettings.card_visibility = normalizeCardVisibility(settings.card_visibility);
+		userSettings.card_order = normalizeCardOrder(settings.card_order);
 		setCardVisibilityStatus('Настройки карточек загружены');
 	} catch (err) {
 		console.error('Не удалось загрузить настройки пользователя:', err.message);
 		userSettings.card_visibility = defaultCardVisibility();
+		userSettings.card_order = defaultCardOrder();
 		setCardVisibilityStatus('Не удалось загрузить настройки, показаны все карточки', 'error');
 	}
 	applyCardVisibility();
 	syncCardVisibilityUI();
+	applyCardOrder();
 }
 
-async function saveUserSettings(partialVisibility = {}) {
-	const merged = normalizeCardVisibility({ ...userSettings.card_visibility, ...partialVisibility });
-	userSettings.card_visibility = merged;
+async function saveUserSettings(partialVisibility = {}, newOrder = null) {
+	const mergedVisibility = normalizeCardVisibility({ ...userSettings.card_visibility, ...partialVisibility });
+	const mergedOrder = normalizeCardOrder(newOrder ?? userSettings.card_order);
+	userSettings.card_visibility = mergedVisibility;
+	userSettings.card_order = mergedOrder;
 	applyCardVisibility();
 	syncCardVisibilityUI();
+	applyCardOrder();
 	setCardVisibilityStatus('Сохраняю...');
 	try {
 		await apiCall('/api/user-settings', {
 			method: 'POST',
-			body: JSON.stringify({ card_visibility: merged })
+			body: JSON.stringify({ card_visibility: mergedVisibility, card_order: mergedOrder })
 		});
 		setCardVisibilityStatus('✓ Сохранено');
 	} catch (err) {
