@@ -34,6 +34,9 @@ let userSettings = {
 // Очередь для оффлайн-запросов
 let offlineQueue = [];
 
+// Событие установки PWA
+let deferredPrompt = null;
+
 // Загружаем очередь из localStorage при старте
 try {
 	const savedQueue = localStorage.getItem('offlineQueue');
@@ -43,6 +46,30 @@ try {
 	}
 } catch (e) {
 	console.error('Ошибка загрузки очереди:', e);
+}
+
+// Ловим событие установки PWA
+window.addEventListener('beforeinstallprompt', (e) => {
+	e.preventDefault();
+	deferredPrompt = e;
+	console.log('✨ PWA можно установить');
+});
+
+// Функция показа диалога установки
+async function showInstallPrompt() {
+	if (!deferredPrompt) {
+		alert('Приложение уже установлено или не поддерживается на этом устройстве');
+		return;
+	}
+
+	try {
+		deferredPrompt.prompt();
+		const { outcome } = await deferredPrompt.userChoice;
+		console.log(`Результат установки: ${outcome}`);
+		deferredPrompt = null;
+	} catch (err) {
+		console.error('Ошибка при показе диалога установки:', err);
+	}
 }
 
 // Сохраняем очередь в localStorage
@@ -511,6 +538,7 @@ async function loadUserData() {
 const authModal = document.getElementById('authModal');
 const openAuthModal = document.getElementById('openAuthModal');
 const closeAuthModal = document.getElementById('closeAuthModal');
+const installPromptTrigger = document.getElementById('installPromptTrigger');
 
 const maleBtn = document.getElementById('maleBtn');
 const femaleBtn = document.getElementById('femaleBtn');
@@ -574,6 +602,7 @@ function closeModal() {
 openAuthModal?.addEventListener('click', openModal);
 closeAuthModal?.addEventListener('click', closeModal);
 currentUserPill?.addEventListener('click', openModal);
+installPromptTrigger?.addEventListener('click', showInstallPrompt);
 
 // Отслеживаем, был ли mousedown на самом overlay (не на содержимом)
 let authModalMouseDownTarget = null;
