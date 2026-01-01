@@ -9,6 +9,8 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// Позволяем вынести БД на volume, чтобы данные не терялись при перезапуске контейнера
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
 
 // Middleware
 app.use(express.json());
@@ -32,9 +34,9 @@ app.use(cors({
 }));
 
 // Инициализация БД
-const db = new sqlite3.Database(path.join(__dirname, 'database.db'), (err) => {
+const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) console.error('Ошибка БД:', err);
-  else console.log('SQLite БД подключена');
+  else console.log('SQLite БД подключена по пути:', DB_PATH);
 });
 
 // Создание таблиц

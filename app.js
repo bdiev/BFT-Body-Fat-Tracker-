@@ -55,10 +55,15 @@ async function loadUserData() {
 		return true;
 	} catch (err) {
 		console.error('✗ Ошибка loadUserData:', err);
+		// Не обнуляем данные при временных проблемах сети/API, просто выводим предупреждение
+		const warnEl = document.getElementById('authStatus');
+		if (warnEl) {
+			warnEl.textContent = '⚠️ Не удалось обновить данные. Повтори позже.';
+			warnEl.classList.add('status-warn');
+		}
+		authenticated = false;
 		currentUser = null;
 		userId = null;
-		authenticated = false;
-		history = [];
 		return false;
 	}
 }
@@ -323,7 +328,8 @@ async function handleLogout() {
 		renderHistory();
 		drawChart();
 		updateLast();
-		openModal();
+		// После логаута закрываем модалку плавно
+		setTimeout(closeModal, 120);
 	} catch (err) {
 		authStatus.textContent = '❌ Ошибка выхода';
 		authStatus.classList.add('status-warn');
