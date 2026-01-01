@@ -1721,6 +1721,19 @@ function renderQuickButtonsList() {
 	});
 }
 
+// Toggle change-password form visibility inside the account modal
+function toggleChangePasswordForm() {
+	const changeForm = document.getElementById('changePasswordForm');
+	const accountInfo = document.getElementById('accountInfo');
+	const accountActions = document.getElementById('accountActions');
+	if (!changeForm || !accountInfo || !accountActions) return;
+
+	const isHidden = changeForm.style.display === 'none' || changeForm.style.display === '';
+	changeForm.style.display = isHidden ? 'block' : 'none';
+	accountInfo.style.display = isHidden ? 'none' : 'block';
+	accountActions.style.display = isHidden ? 'none' : 'block';
+}
+
 async function saveWaterSettings() {
 	const weight = parseFloat(document.getElementById('waterWeight').value);
 	const activity = document.getElementById('waterActivity').value;
