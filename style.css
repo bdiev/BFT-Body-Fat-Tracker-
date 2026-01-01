@@ -32,7 +32,7 @@ body {
 	font-family: -apple-system, 'Inter', 'SF Pro Display', system-ui, 'Segoe UI', sans-serif;
 	color: var(--text-dark);
 	background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #1e253e 100%);
-	padding: 40px 20px 0;
+	padding: 24px 20px 0;
 	position: relative;
 	display: flex;
 	flex-direction: column;
@@ -58,9 +58,9 @@ body::before {
 	max-width: 1200px;
 	margin: 0 auto;
 	display: grid;
-	gap: 28px;
+	gap: 20px;
 	flex: 1;
-	padding-bottom: 20px;
+	padding-bottom: 0;
 	width: 100%;
 }
 
@@ -1252,7 +1252,7 @@ select {
 	margin-left: -20px;
 	margin-right: -20px;
 	width: calc(100% + 40px);
-	padding: 12px 20px;
+	padding: 10px 16px;
 	background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.05));
 	border-top: 1px solid rgba(99, 102, 241, 0.15);
 	backdrop-filter: blur(20px);
