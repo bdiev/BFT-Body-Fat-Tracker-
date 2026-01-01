@@ -1731,10 +1731,12 @@ function drawChart() {
 
 // ===== СМЕНА ПАРОЛЯ =====
 async function handleChangePassword() {
-	const currentPassword = document.getElementById('currentPassword').value;
-	const newPassword = document.getElementById('newPassword').value;
-	const confirmPassword = document.getElementById('confirmPassword').value;
+	const currentPassword = document.getElementById('currentPassword').value.trim();
+	const newPassword = document.getElementById('newPassword').value.trim();
+	const confirmPassword = document.getElementById('confirmPassword').value.trim();
 	const statusEl = document.getElementById('passwordChangeStatus');
+	
+	console.log('🔐 handleChangePassword - currentPassword длина:', currentPassword.length, 'newPassword длина:', newPassword.length);
 	
 	if (!currentPassword || !newPassword || !confirmPassword) {
 		statusEl.textContent = '❌ Заполни все поля';
@@ -1755,6 +1757,7 @@ async function handleChangePassword() {
 	}
 	
 	try {
+		console.log('🔐 Отправляю запрос на изменение пароля...');
 		await apiCall('/api/change-password', {
 			method: 'POST',
 			body: JSON.stringify({ currentPassword, newPassword })
@@ -1770,6 +1773,7 @@ async function handleChangePassword() {
 			toggleChangePasswordForm();
 		}, 1500);
 	} catch (err) {
+		console.error('🔐 Ошибка смены пароля:', err);
 		statusEl.textContent = '❌ ' + err.message;
 		statusEl.style.color = '#ef4444';
 	}

@@ -420,8 +420,10 @@ app.delete('/api/history/:id', authenticateToken, (req, res) => {
 
 // Смена пароля
 app.post('/api/change-password', authenticateToken, async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
+  const currentPassword = req.body?.currentPassword?.trim() || '';
+  const newPassword = req.body?.newPassword?.trim() || '';
   console.log('🔑 Смена пароля - req.userId:', req.userId, 'req.username:', req.username);
+  console.log('🔑 currentPassword длина:', currentPassword.length, 'newPassword длина:', newPassword.length);
   
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'Все поля обязательны' });
@@ -439,6 +441,7 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
         [req.userId],
         (err, row) => {
           console.log('📋 Поиск пользователя по id:', req.userId, '- результат:', row ? 'найден' : 'НЕ найден');
+          if (row) console.log('📋 password_hash найден, первые 20 символов:', row.password_hash?.substring(0, 20));
           if (err) reject(err);
           else resolve(row);
         }
@@ -450,8 +453,11 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
     }
     
     // Проверяем текущий пароль
+    console.log('🔐 Сравниваю пароль...');
     const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    console.log('🔐 Результат bcrypt.compare:', valid);
     if (!valid) {
+      console.log('❌ Текущий пароль неверный!');
       return res.status(401).json({ error: 'Текущий пароль неверный' });
     }
     
