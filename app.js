@@ -707,68 +707,85 @@ function getRecommendations(bf, sex) {
 }
 
 function showEntryDetail(entry) {
-	const assessment = getBodyFatAssessment(entry.bf, entry.sex);
-	const recommendations = getRecommendations(entry.bf, entry.sex);
-	const date = new Date(entry.timestamp).toLocaleDateString('ru-RU', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-		hour: '2-digit',
-		minute: '2-digit'
-	});
-	
-	const detailContent = document.getElementById('entryDetailContent');
-	detailContent.innerHTML = `
-		<div style="margin-bottom: 24px;">
-			<div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">${date}</div>
-			<div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px;">
-				<div style="font-size: 48px; font-weight: 700; color: ${assessment.color};">${entry.bf.toFixed(1)}%</div>
-				<div>
-					<div style="font-size: 14px; font-weight: 600; color: ${assessment.color};">${assessment.category}</div>
-					<div style="font-size: 12px; color: var(--text-muted);">${assessment.status}</div>
-				</div>
-			</div>
-		</div>
+	console.log('🎯 showEntryDetail вызвана для записи:', entry);
+	try {
+		const assessment = getBodyFatAssessment(entry.bf, entry.sex);
+		const recommendations = getRecommendations(entry.bf, entry.sex);
+		const date = new Date(entry.timestamp).toLocaleDateString('ru-RU', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
 		
-		<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-			<h3 style="margin: 0 0 12px; font-size: 14px; color: #a5b4fc;">📋 Твои измерения</h3>
-			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
-				<div>
-					<span style="color: var(--text-muted);">Пол:</span>
-					<div style="font-weight: 600;">${entry.sex === 'male' ? 'Мужчина' : 'Женщина'}</div>
-				</div>
-				<div>
-					<span style="color: var(--text-muted);">Рост:</span>
-					<div style="font-weight: 600;">${entry.height} см</div>
-				</div>
-				<div>
-					<span style="color: var(--text-muted);">Обхват шеи:</span>
-					<div style="font-weight: 600;">${entry.neck} см</div>
-				</div>
-				<div>
-					<span style="color: var(--text-muted);">Обхват талии:</span>
-					<div style="font-weight: 600;">${entry.waist} см</div>
-				</div>
-				${entry.sex === 'female' ? `
-				<div>
-					<span style="color: var(--text-muted);">Обхват бёдер:</span>
-					<div style="font-weight: 600;">${entry.hip} см</div>
-				</div>
-				` : ''}
-			</div>
-		</div>
+		const detailContent = document.getElementById('entryDetailContent');
+		if (!detailContent) {
+			console.error('❌ entryDetailContent не найден в DOM');
+			return;
+		}
 		
-		<div style="background: rgba(76, 175, 80, 0.08); border: 1px solid rgba(76, 175, 80, 0.2); border-radius: 12px; padding: 16px;">
-			<h3 style="margin: 0 0 12px; font-size: 14px; color: #81c784;">💡 Рекомендации</h3>
-			<div style="display: flex; flex-direction: column; gap: 8px;">
-				${recommendations.map(tip => `<div style="font-size: 14px; line-height: 1.4; color: var(--text);">${tip}</div>`).join('')}
+		detailContent.innerHTML = `
+			<div style="margin-bottom: 24px;">
+				<div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">${date}</div>
+				<div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px;">
+					<div style="font-size: 48px; font-weight: 700; color: ${assessment.color};">${entry.bf.toFixed(1)}%</div>
+					<div>
+						<div style="font-size: 14px; font-weight: 600; color: ${assessment.color};">${assessment.category}</div>
+						<div style="font-size: 12px; color: var(--text-muted);">${assessment.status}</div>
+					</div>
+				</div>
 			</div>
-		</div>
-	`;
-	
-	const modal = document.getElementById('entryDetailModal');
-	modal.classList.add('active');
-	document.body.style.overflow = 'hidden';
+			
+			<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+				<h3 style="margin: 0 0 12px; font-size: 14px; color: #a5b4fc;">📋 Твои измерения</h3>
+				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
+					<div>
+						<span style="color: var(--text-muted);">Пол:</span>
+						<div style="font-weight: 600;">${entry.sex === 'male' ? 'Мужчина' : 'Женщина'}</div>
+					</div>
+					<div>
+						<span style="color: var(--text-muted);">Рост:</span>
+						<div style="font-weight: 600;">${entry.height} см</div>
+					</div>
+					<div>
+						<span style="color: var(--text-muted);">Обхват шеи:</span>
+						<div style="font-weight: 600;">${entry.neck} см</div>
+					</div>
+					<div>
+						<span style="color: var(--text-muted);">Обхват талии:</span>
+						<div style="font-weight: 600;">${entry.waist} см</div>
+					</div>
+					${entry.sex === 'female' ? `
+					<div>
+						<span style="color: var(--text-muted);">Обхват бёдер:</span>
+						<div style="font-weight: 600;">${entry.hip} см</div>
+					</div>
+					` : ''}
+				</div>
+			</div>
+			
+			<div style="background: rgba(76, 175, 80, 0.08); border: 1px solid rgba(76, 175, 80, 0.2); border-radius: 12px; padding: 16px;">
+				<h3 style="margin: 0 0 12px; font-size: 14px; color: #81c784;">💡 Рекомендации</h3>
+				<div style="display: flex; flex-direction: column; gap: 8px;">
+					${recommendations.map(tip => `<div style="font-size: 14px; line-height: 1.4; color: var(--text);">${tip}</div>`).join('')}
+				</div>
+			</div>
+		`;
+		
+		const modal = document.getElementById('entryDetailModal');
+		if (!modal) {
+			console.error('❌ entryDetailModal не найден в DOM');
+			return;
+		}
+		
+		console.log('✓ Добавляю класс active к модалке');
+		modal.classList.add('active');
+		document.body.style.overflow = 'hidden';
+		console.log('✓ Модалка открыта');
+	} catch (err) {
+		console.error('❌ Ошибка в showEntryDetail:', err);
+	}
 }
 
 function closeEntryModal() {
@@ -1155,7 +1172,9 @@ function renderHistory() {
 		
 		// Клик на строку открывает модаль (но не на кнопку удаления)
 		row.addEventListener('click', (e) => {
+			console.log('🖱️ Клик на history-item, target:', e.target.tagName);
 			if (e.target.tagName !== 'BUTTON') {
+				console.log('📘 Вызываю showEntryDetail для item:', item);
 				showEntryDetail(item);
 			}
 		});
