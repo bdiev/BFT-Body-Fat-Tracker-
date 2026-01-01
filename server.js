@@ -246,6 +246,31 @@ app.post('/api/logout', (req, res) => {
   res.json({ message: 'До свидания!' });
 });
 
+// Удалить аккаунт пользователя
+app.post('/api/delete-account', authenticateToken, (req, res) => {
+  try {
+    // Удаляем все записи пользователя
+    db.run('DELETE FROM entries WHERE user_id = ?', [req.userId]);
+    
+    // Удаляем настройки воды
+    db.run('DELETE FROM water_settings WHERE user_id = ?', [req.userId]);
+    
+    // Удаляем логи воды
+    db.run('DELETE FROM water_logs WHERE user_id = ?', [req.userId]);
+    
+    // Удаляем самого пользователя
+    db.run('DELETE FROM users WHERE id = ?', [req.userId], (err) => {
+      if (err) return res.status(500).json({ error: 'Ошибка удаления' });
+      
+      // Очищаем cookies
+      res.clearCookie('token', { path: '/' });
+      res.json({ message: 'Аккаунт удален' });
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Получить текущего пользователя
 app.get('/api/me', authenticateToken, (req, res) => {
   res.json({ id: req.userId, username: req.username });

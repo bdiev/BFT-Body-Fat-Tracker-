@@ -370,6 +370,12 @@ async function handleSignup() {
 		status.textContent = '✓ Аккаунт создан! Добро пожаловать!';
 		status.style.color = '#86efac';
 		
+		// Сохраняем пароль в localStorage если нужно запомнить
+		if (document.getElementById('rememberMeCheckbox')?.checked) {
+			localStorage.setItem('rememberMe_username', username);
+			localStorage.setItem('rememberMe_password', password);
+		}
+		
 		signupUsernameInput.value = '';
 		signupEmailInput.value = '';
 		signupPasswordInput.value = '';
@@ -379,8 +385,14 @@ async function handleSignup() {
 		drawChart();
 		updateLast(history[history.length - 1]);
 		
+		// Загружаем воду если пользователь авторизован
+		await loadWaterSettings();
+		await loadWaterLogs();
+		
+		// Закрываем модаль и форму signup, автоматически логиним
 		setTimeout(() => {
 			toggleSignupForm();
+			closeModal();
 		}, 1500);
 	} catch (err) {
 		status.textContent = '❌ ' + err.message;
@@ -508,7 +520,62 @@ async function handleLogout() {
 	}
 }
 
-function toggleSignupForm() {
+async function handleDeleteAccount() {
+	// Запрашиваем подтверждение
+	const confirmDelete = confirm('Ты уверен? Это действие невозможно отменить. Все твои данные будут удалены.');
+	if (!confirmDelete) return;
+	
+	// Второе подтверждение для безопасности
+	const confirmSecond = prompt('Введи название аккаунта чтобы подтвердить удаление:');
+	if (confirmSecond !== currentUser) {
+		alert('❌ Неверное название аккаунта');
+		return;
+	}
+	
+	try {
+		const authStatus = document.getElementById('authStatus');
+		authStatus.textContent = '⏳ Удаляю аккаунт...';
+		authStatus.classList.remove('status-warn');
+		
+		// Закрываем WebSocket перед удалением
+		if (ws) {
+			ws.close();
+			ws = null;
+		}
+		
+		// Удаляем аккаунт на сервере
+		await apiCall('/api/delete-account', { method: 'POST' });
+		
+		// Очищаем localStorage
+		localStorage.removeItem('rememberMe_username');
+		localStorage.removeItem('rememberMe_password');
+		
+		// Обнуляем данные
+		authenticated = false;
+		currentUser = null;
+		userId = null;
+		history = [];
+		waterLogs = [];
+		userSelect.value = '';
+		passwordInput.value = '';
+		
+		authStatus.textContent = '✓ Аккаунт удален. До встречи!';
+		authStatus.classList.add('status-warn');
+		updateUserBadge();
+		renderHistory();
+		drawChart();
+		updateLast();
+		
+		// Закрываем модалку через 1.5 секунды
+		setTimeout(() => {
+			closeModal();
+		}, 1500);
+	} catch (err) {
+		const authStatus = document.getElementById('authStatus');
+		authStatus.textContent = '❌ Ошибка удаления: ' + err.message;
+		authStatus.classList.add('status-warn');
+	}
+}
 	const loginForm = document.getElementById('loginForm');
 	const isSignupShown = signupForm.style.display === 'block';
 	
@@ -1314,6 +1381,7 @@ backToLoginBtn?.addEventListener('click', toggleSignupForm);
 document.getElementById('toggleChangePassword')?.addEventListener('click', toggleChangePasswordForm);
 document.getElementById('saveNewPassword')?.addEventListener('click', handleChangePassword);
 document.getElementById('cancelChangePassword')?.addEventListener('click', toggleChangePasswordForm);
+document.getElementById('deleteAccountBtn')?.addEventListener('click', handleDeleteAccount);
 document.getElementById('landingLoginBtn')?.addEventListener('click', openModal);
 
 // Обработчики для воды
