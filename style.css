@@ -202,10 +202,7 @@ header {
 	flex-direction: column;
 }
 
-.cards-grid.grid-layout #chart-section,
-.cards-grid.grid-layout #waterChartSection {
-	grid-column: 1 / -1;
-}
+/* In grid mode charts take same width as other cards (no spanning) */
 
 .card {
 	background: var(--panel);
