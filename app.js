@@ -371,8 +371,10 @@ function renderCardOrderEditor() {
 	const list = document.getElementById('cardOrderList');
 	if (!list) return;
 	const order = normalizeCardOrder(userSettings.card_order);
+	const vis = normalizeCardVisibility(userSettings.card_visibility);
+	const visibleOrder = order.filter(key => vis[key]);
 	list.innerHTML = '';
-	order.forEach((key, idx) => {
+	visibleOrder.forEach((key, idx) => {
 		const li = document.createElement('li');
 		li.style.display = 'flex';
 		li.style.alignItems = 'center';
@@ -412,8 +414,8 @@ function renderCardOrderEditor() {
 		downBtn.style.border = '1px solid rgba(99, 102, 241, 0.25)';
 		downBtn.style.background = 'rgba(99, 102, 241, 0.12)';
 		downBtn.style.color = '#a5b4fc';
-		downBtn.style.cursor = idx === order.length - 1 ? 'not-allowed' : 'pointer';
-		downBtn.disabled = idx === order.length - 1;
+		downBtn.style.cursor = idx === visibleOrder.length - 1 ? 'not-allowed' : 'pointer';
+		downBtn.disabled = idx === visibleOrder.length - 1;
 		downBtn.addEventListener('click', () => moveCardOrder(key, 1));
 
 		controls.appendChild(upBtn);

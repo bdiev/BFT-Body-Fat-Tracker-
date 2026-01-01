@@ -734,6 +734,7 @@ canvas {
 	border-radius: var(--radius);
 	width: 100%;
 	max-width: 420px;
+	max-height: min(90vh, 720px);
 	box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
 	backdrop-filter: blur(20px) saturate(180%);
 	overflow: hidden;
@@ -793,6 +794,8 @@ canvas {
 
 .modal-body {
 	padding: 24px;
+	max-height: calc(90vh - 180px);
+	overflow-y: auto;
 }
 
 .modal-footer {
