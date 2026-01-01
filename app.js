@@ -665,7 +665,15 @@ async function loadWaterSettings() {
 		const settings = await apiCall('/api/water-settings');
 		waterSettings = settings;
 		console.log('✓ Загружены настройки воды:', waterSettings);
-		renderWaterQuickButtons();
+		
+		// Показываем секцию воды только если вес установлен
+		const waterSection = document.getElementById('waterSection');
+		if (waterSettings.weight && waterSettings.weight > 0) {
+			waterSection.style.display = 'block';
+			renderWaterQuickButtons();
+		} else {
+			waterSection.style.display = 'none';
+		}
 	} catch (err) {
 		console.error('✗ Ошибка загрузки настроек воды:', err);
 	}
@@ -800,10 +808,38 @@ function showWaterNotification(message) {
 
 function openWaterSettingsModal() {
 	const modal = document.getElementById('waterSettingsModal');
-	document.getElementById('waterWeight').value = waterSettings.weight || 70;
-	document.getElementById('waterActivity').value = waterSettings.activity || 'moderate';
+	const weightInput = document.getElementById('waterWeight');
+	const activityInput = document.getElementById('waterActivity');
+	const goalInput = document.getElementById('waterGoal');
+	
+	weightInput.value = waterSettings.weight || '';
+	activityInput.value = waterSettings.activity || 'moderate';
 	document.getElementById('waterResetTime').value = waterSettings.reset_time || '00:00';
-	document.getElementById('waterGoal').value = waterSettings.daily_goal || 2000;
+	goalInput.value = waterSettings.daily_goal || '';
+	
+	// Функция для автоматического расчета нормы
+	const updateGoal = () => {
+		const weight = parseFloat(weightInput.value);
+		const activity = activityInput.value;
+		
+		if (weight && weight > 0) {
+			const calculated = calculateDailyWaterGoal(weight, activity);
+			goalInput.value = calculated;
+			goalInput.placeholder = `Рассчитано: ${calculated}мл`;
+		} else {
+			goalInput.value = '';
+			goalInput.placeholder = 'Сначала введи вес';
+		}
+	};
+	
+	// При изменении веса или активности, пересчитываем норму
+	weightInput.addEventListener('input', updateGoal);
+	activityInput.addEventListener('change', updateGoal);
+	
+	// Если вес уже введен, показываем рассчитанное значение
+	if (!goalInput.value) {
+		updateGoal();
+	}
 	
 	renderQuickButtonsList();
 	
