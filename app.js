@@ -16,6 +16,12 @@ let waterSettings = {
 };
 let waterLogs = [];
 
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ДАТЫ/ВРЕМЕНИ =====
+function formatLocalDateTime(timestamp, options = {}) {
+	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	return new Date(timestamp).toLocaleString('ru-RU', { timeZone, ...options });
+}
+
 // ===== API ФУНКЦИИ =====
 async function apiCall(endpoint, options = {}) {
 	try {
@@ -707,15 +713,15 @@ function getRecommendations(bf, sex) {
 }
 
 function renderEntryDetailContent(entry) {
-	const assessment = getBodyFatAssessment(entry.bf, entry.sex);
-	const recommendations = getRecommendations(entry.bf, entry.sex);
-	const date = new Date(entry.timestamp).toLocaleDateString('ru-RU', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-		hour: '2-digit',
-		minute: '2-digit'
-	});
+		const assessment = getBodyFatAssessment(entry.bf, entry.sex);
+		const recommendations = getRecommendations(entry.bf, entry.sex);
+		const date = formatLocalDateTime(entry.timestamp, {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
 
 	return `
 		<div style="display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap: wrap;">
@@ -1144,8 +1150,7 @@ function renderHistory() {
 		const row = document.createElement('div');
 		row.className = 'history-item';
 		row.style.cursor = 'pointer';
-		const date = new Date(item.timestamp);
-		const dateStr = date.toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+		const dateStr = formatLocalDateTime(item.timestamp, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 		row.innerHTML = `
 			<div style="display:flex; align-items:center; gap:10px; flex:1;">
 				<div style="flex:1;">
@@ -1197,7 +1202,7 @@ function updateLast(entry) {
 		lastMeta.textContent = 'Нет данных';
 		return;
 	}
-	const dateStr = new Date(entry.timestamp).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+	const dateStr = formatLocalDateTime(entry.timestamp, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 	lastResult.textContent = entry.bf + ' %';
 	lastMeta.textContent = `${entry.sex === 'male' ? 'Муж' : 'Жен'}, ${entry.group || ''} • ${dateStr}`;
 }
@@ -1351,7 +1356,7 @@ function drawChart() {
 	ctx.font = '11px "SF Pro Display"';
 	for (let i = 0; i < entries.length; i += xStepShow) {
 		const x = scaleX(i);
-		const label = new Date(entries[i].timestamp).toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' });
+		const label = formatLocalDateTime(entries[i].timestamp, { month: 'short', day: 'numeric' });
 		ctx.fillText(label, x - 18, viewH - padding + 18);
 	}
 
