@@ -34,6 +34,18 @@ function normalizeTimestamp(ts) {
 	return new Date(ts);
 }
 
+// Возвращает локальный момент последнего "сброса дня" для воды по reset_time (HH:mm)
+function getLastWaterResetBoundary(resetTime = '00:00') {
+	const [hh, mm] = (resetTime || '00:00').split(':').map(v => parseInt(v, 10) || 0);
+	const now = new Date();
+	const boundary = new Date(now);
+	boundary.setHours(hh, mm, 0, 0);
+	if (boundary > now) {
+		boundary.setDate(boundary.getDate() - 1);
+	}
+	return boundary;
+}
+
 // ===== API ФУНКЦИИ =====
 async function apiCall(endpoint, options = {}) {
 	try {
@@ -868,7 +880,10 @@ function renderWaterQuickButtons() {
 }
 
 function renderWaterProgress() {
-	const totalToday = waterLogs.reduce((sum, log) => sum + log.amount, 0);
+	const boundary = getLastWaterResetBoundary(waterSettings.reset_time);
+	const totalToday = waterLogs
+		.filter(log => normalizeTimestamp(log.logged_at) >= boundary)
+		.reduce((sum, log) => sum + log.amount, 0);
 	const goal = waterSettings.daily_goal || 2000;
 	const percentage = Math.min((totalToday / goal) * 100, 100);
 	
@@ -897,8 +912,12 @@ function renderWaterLogs() {
 	
 	container.innerHTML = '';
 	
+	const boundary = getLastWaterResetBoundary(waterSettings.reset_time);
+
 	// Сортируем от новых к старым (учитываем нормализацию таймзоны)
-	const sorted = [...waterLogs].sort((a, b) => normalizeTimestamp(b.logged_at) - normalizeTimestamp(a.logged_at));
+	const sorted = [...waterLogs]
+		.sort((a, b) => normalizeTimestamp(b.logged_at) - normalizeTimestamp(a.logged_at))
+		.filter(log => normalizeTimestamp(log.logged_at) >= boundary);
 
 	sorted.forEach(log => {
 		const time = formatLocalDateTime(normalizeTimestamp(log.logged_at), { hour: '2-digit', minute: '2-digit' });
