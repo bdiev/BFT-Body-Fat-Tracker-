@@ -267,48 +267,54 @@ function setSex(sex) {
 }
 
 function updateUserBadge() {
-	const loginForm = document.getElementById('loginForm');
-	const logoutForm = document.getElementById('logoutForm');
-	const modalTitle = document.getElementById('modalTitle');
-	const userDisplayName = document.getElementById('userDisplayName');
-	const landingPage = document.getElementById('landingPage');
-	const appContent = document.getElementById('appContent');
-	const mainHeader = document.getElementById('mainHeader');
-	
-	if (authenticated && currentUser) {
-		// Скрываем landing page, показываем приложение
-		landingPage.style.display = 'none';
-		appContent.style.display = 'block';
-		mainHeader.style.display = 'flex';
+	try {
+		const loginForm = document.getElementById('loginForm');
+		const logoutForm = document.getElementById('logoutForm');
+		const modalTitle = document.getElementById('modalTitle');
+		const userDisplayName = document.getElementById('userDisplayName');
+		const landingPage = document.getElementById('landingPage');
+		const appContent = document.getElementById('appContent');
+		const mainHeader = document.getElementById('mainHeader');
 		
-		currentUserPill.textContent = '✓ Ты: ' + currentUser;
-		currentUserPill.classList.remove('status-warn');
-		currentUserPill.classList.add('status-ok');
-		currentUserPill.style.display = 'inline-block';
-		openAuthModal.style.display = 'none';
-		loginForm.style.display = 'none';
-		logoutForm.style.display = 'block';
-		modalTitle.textContent = 'Аккаунт';
-		userDisplayName.textContent = currentUser;
-		logoutBtn.style.display = '';
-		loginBtn.style.display = 'none';
-		toggleSignupBtn.style.display = 'none';
-	} else {
-		// Показываем landing page, скрываем приложение
-		landingPage.style.display = 'block';
-		appContent.style.display = 'none';
-		mainHeader.style.display = 'none';
+		console.log('updateUserBadge: authenticated=', authenticated, 'currentUser=', currentUser);
 		
-		currentUserPill.style.display = 'none';
-		currentUserPill.classList.remove('status-ok');
-		currentUserPill.classList.add('status-warn');
-		openAuthModal.style.display = '';
-		loginForm.style.display = 'block';
-		logoutForm.style.display = 'none';
-		signupForm.style.display = 'none';
-		logoutBtn.style.display = 'none';
-		loginBtn.style.display = '';
+		if (authenticated && currentUser) {
+			// Скрываем landing page, показываем приложение
+			landingPage.style.display = 'none';
+			appContent.style.display = 'block';
+			mainHeader.style.display = 'flex';
+			
+			currentUserPill.textContent = '✓ Ты: ' + currentUser;
+			currentUserPill.classList.remove('status-warn');
+			currentUserPill.classList.add('status-ok');
+			currentUserPill.style.display = 'inline-block';
+			openAuthModal.style.display = 'none';
+			loginForm.style.display = 'none';
+			logoutForm.style.display = 'block';
+			modalTitle.textContent = 'Аккаунт';
+			userDisplayName.textContent = currentUser;
+			logoutBtn.style.display = '';
+			loginBtn.style.display = 'none';
+			toggleSignupBtn.style.display = 'none';
+		} else {
+			// Показываем landing page, скрываем приложение
+			landingPage.style.display = 'block';
+			appContent.style.display = 'none';
+			mainHeader.style.display = 'none';
+			
+			currentUserPill.style.display = 'none';
+			currentUserPill.classList.remove('status-ok');
+			currentUserPill.classList.add('status-warn');
+			openAuthModal.style.display = '';
+			loginForm.style.display = 'block';
+			logoutForm.style.display = 'none';
+			signupForm.style.display = 'none';
+			logoutBtn.style.display = 'none';
+			loginBtn.style.display = '';
 		toggleSignupBtn.style.display = '';
+	}
+	} catch (err) {
+		console.error('❌ Ошибка в updateUserBadge:', err);
 	}
 }
 
@@ -1445,48 +1451,63 @@ document.getElementById('waterSettingsModal')?.addEventListener('click', (e) => 
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 (async () => {
-	console.log('🚀 Инициализация приложения...');
-	
-	// Проверяем есть ли сохраненные данные входа
-	const savedUsername = localStorage.getItem('rememberMe_username');
-	const savedPassword = localStorage.getItem('rememberMe_password');
-	
-	if (savedUsername && savedPassword) {
-		console.log('🔄 Найдены сохраненные данные входа, попытка автоматического входа...');
-		const autoLoginSuccess = await autoLogin(savedUsername, savedPassword);
-		if (autoLoginSuccess) {
+	try {
+		console.log('🚀 Инициализация приложения...');
+		console.log('✓ DOM элементы загружены');
+		
+		// Проверяем есть ли сохраненные данные входа
+		const savedUsername = localStorage.getItem('rememberMe_username');
+		const savedPassword = localStorage.getItem('rememberMe_password');
+		
+		if (savedUsername && savedPassword) {
+			console.log('🔄 Найдены сохраненные данные входа, попытка автоматического входа...');
+			const autoLoginSuccess = await autoLogin(savedUsername, savedPassword);
+			if (autoLoginSuccess) {
+				await loadWaterSettings();
+				await loadWaterLogs();
+			}
+		} else {
+			// Обычная загрузка данных пользователя (через cookies если есть)
+			await loadUserData();
+		}
+		
+		console.log('✓ После loadUserData - authenticated:', authenticated, 'currentUser:', currentUser, 'история:', history.length);
+		setSex('male');
+		updateUserBadge();
+		console.log('✓ updateUserBadge завершен');
+		
+		renderHistory();
+		console.log('✓ renderHistory завершен');
+		
+		resizeCanvas();
+		console.log('✓ resizeCanvas завершен');
+		
+		drawChart();
+		console.log('✓ drawChart завершен');
+		
+		updateLast(authenticated ? history[history.length - 1] : null);
+		console.log('✓ updateLast завершен');
+		
+		// Загружаем воду если пользователь авторизован
+		if (authenticated) {
 			await loadWaterSettings();
 			await loadWaterLogs();
 		}
-	} else {
-		// Обычная загрузка данных пользователя (через cookies если есть)
-		await loadUserData();
-	}
-	
-	console.log('✓ После loadUserData - authenticated:', authenticated, 'currentUser:', currentUser, 'история:', history.length);
-	setSex('male');
-	updateUserBadge();
-	renderHistory();
-	resizeCanvas();
-	drawChart();
-	updateLast(authenticated ? history[history.length - 1] : null);
-	
-	// Загружаем воду если пользователь авторизован
-	if (authenticated) {
-		await loadWaterSettings();
-		await loadWaterLogs();
-	}
-	
-	console.log('✓ Инициализация завершена');
-	
-	window.addEventListener('resize', () => {
-		resizeCanvas();
-		drawChart();
-	});
-
-	if ('serviceWorker' in navigator) {
-		window.addEventListener('load', () => {
-			navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+		
+		console.log('✓ Инициализация завершена');
+		
+		window.addEventListener('resize', () => {
+			resizeCanvas();
+			drawChart();
 		});
+
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+			});
+		}
+	} catch (err) {
+		console.error('❌ КРИТИЧЕСКАЯ ОШИБКА при инициализации:', err);
+		console.error(err.stack);
 	}
 })();
