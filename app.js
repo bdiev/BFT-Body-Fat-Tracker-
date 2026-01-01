@@ -489,22 +489,9 @@ async function handleCalculate() {
 			})
 		});
 		
-		const entry = {
-			id: result.id,
-			sex: result.sex,
-			height: result.height,
-			neck: result.neck,
-			waist: result.waist,
-			hip: result.hip,
-			bf: result.bf,
-			group: result.group,
-			timestamp: new Date(result.timestamp).getTime()
-		};
-		
-		history.push(entry);
-		renderHistory();
-		drawChart();
-		updateLast(entry);
+		// Не добавляем локально, дождёмся уведомления от WebSocket
+		// которое добавит запись и обновит интерфейс
+		console.log('✓ Запись отправлена на сервер, ждём WebSocket обновления');
 	} catch (err) {
 		currentNote.textContent = '❌ Ошибка сохранения: ' + err.message;
 	}
