@@ -181,10 +181,9 @@ header {
 }
 
 .cards-grid {
-	display: grid;
+	display: flex;
+	flex-direction: column;
 	gap: 24px;
-	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-	align-items: start;
 }
 
 .card {
