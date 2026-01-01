@@ -8,6 +8,18 @@
   "description": "PWA для расчёта и отслеживания процента жира в теле.",
   "icons": [
     {
+      "src": "/icons/siteicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/siteicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/icons/icon-192.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",

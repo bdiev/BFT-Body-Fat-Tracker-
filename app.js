@@ -31,6 +31,78 @@ let userSettings = {
 	card_visibility: defaultCardVisibility()
 };
 
+// Очередь для оффлайн-запросов
+let offlineQueue = [];
+
+// Загружаем очередь из localStorage при старте
+try {
+	const savedQueue = localStorage.getItem('offlineQueue');
+	if (savedQueue) {
+		offlineQueue = JSON.parse(savedQueue);
+		console.log('📦 Загружена очередь оффлайн-запросов:', offlineQueue.length);
+	}
+} catch (e) {
+	console.error('Ошибка загрузки очереди:', e);
+}
+
+// Сохраняем очередь в localStorage
+function saveOfflineQueue() {
+	try {
+		localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+	} catch (e) {
+		console.error('Ошибка сохранения очереди:', e);
+	}
+}
+
+// Обработка оффлайн-запросов при возвращении онлайн
+async function processOfflineQueue() {
+	if (offlineQueue.length === 0) return;
+	
+	console.log('🌐 Онлайн! Обрабатываю очередь из', offlineQueue.length, 'запросов...');
+	
+	const queue = [...offlineQueue];
+	offlineQueue = [];
+	saveOfflineQueue();
+	
+	for (const item of queue) {
+		try {
+			console.log('📤 Отправляю оффлайн-запрос:', item.endpoint);
+			await apiCall(item.endpoint, item.options);
+			console.log('✓ Успешно:', item.endpoint);
+		} catch (err) {
+			console.error('❌ Ошибка при отправке оффлайн-запроса:', err);
+			// Возвращаем обратно в очередь если не удалось
+			offlineQueue.push(item);
+		}
+	}
+	
+	saveOfflineQueue();
+	
+	if (offlineQueue.length === 0) {
+		console.log('✓ Все оффлайн-данные синхронизированы!');
+		// Перезагружаем данные после синхронизации
+		if (authenticated) {
+			await loadUserData();
+			await loadUserSettings();
+			await loadWaterSettings();
+			await loadWaterLogs();
+			renderHistory();
+			drawChart();
+			updateLast(history[history.length - 1]);
+		}
+	}
+}
+
+// Отслеживаем восстановление соединения
+window.addEventListener('online', () => {
+	console.log('🌐 Соединение восстановлено!');
+	processOfflineQueue();
+});
+
+window.addEventListener('offline', () => {
+	console.log('📴 Соединение потеряно. Данные будут синхронизированы при восстановлении.');
+});
+
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ДАТЫ/ВРЕМЕНИ =====
 function formatLocalDateTime(timestamp, options = {}) {
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -280,6 +352,19 @@ async function apiCall(endpoint, options = {}) {
 		return data;
 	} catch (err) {
 		console.error('API ошибка:', err);
+		
+		// Если это POST/PUT/DELETE запрос и мы оффлайн - добавляем в очередь
+		if (!navigator.onLine && options.method && ['POST', 'PUT', 'DELETE'].includes(options.method)) {
+			console.log('📴 Оффлайн - добавляю запрос в очередь:', endpoint);
+			offlineQueue.push({
+				endpoint,
+				options,
+				timestamp: Date.now()
+			});
+			saveOfflineQueue();
+			throw new Error('Данные сохранены. Будут отправлены при подключении к сети.');
+		}
+		
 		throw err;
 	}
 }
@@ -489,14 +574,26 @@ function closeModal() {
 openAuthModal?.addEventListener('click', openModal);
 closeAuthModal?.addEventListener('click', closeModal);
 currentUserPill?.addEventListener('click', openModal);
+
+// Отслеживаем, был ли mousedown на самом overlay (не на содержимом)
+let authModalMouseDownTarget = null;
+authModal?.addEventListener('mousedown', (e) => {
+	authModalMouseDownTarget = e.target;
+});
 authModal?.addEventListener('click', (e) => {
-	if (e.target === authModal) closeModal();
+	if (e.target === authModal && authModalMouseDownTarget === authModal) closeModal();
 });
 
 // Обработчики для модали записи
 document.getElementById('closeEntryModal')?.addEventListener('click', closeEntryModal);
+
+// Отслеживаем mousedown для модали записи
+let entryModalMouseDownTarget = null;
+document.getElementById('entryDetailModal')?.addEventListener('mousedown', (e) => {
+	entryModalMouseDownTarget = e.target;
+});
 document.getElementById('entryDetailModal')?.addEventListener('click', (e) => {
-	if (e.target === document.getElementById('entryDetailModal')) closeEntryModal();
+	if (e.target === document.getElementById('entryDetailModal') && entryModalMouseDownTarget === document.getElementById('entryDetailModal')) closeEntryModal();
 });
 
 // ===== ФУНКЦИИ ЛОГИКИ =====
@@ -1854,8 +1951,13 @@ document.getElementById('addQuickButtonBtn')?.addEventListener('click', () => {
 	renderQuickButtonsList();
 });
 
+// Отслеживаем mousedown для модали настроек воды
+let waterSettingsModalMouseDownTarget = null;
+document.getElementById('waterSettingsModal')?.addEventListener('mousedown', (e) => {
+	waterSettingsModalMouseDownTarget = e.target;
+});
 document.getElementById('waterSettingsModal')?.addEventListener('click', (e) => {
-	if (e.target === document.getElementById('waterSettingsModal')) closeWaterSettingsModal();
+	if (e.target === document.getElementById('waterSettingsModal') && waterSettingsModalMouseDownTarget === document.getElementById('waterSettingsModal')) closeWaterSettingsModal();
 });
 
 // Обработчики для графика воды
@@ -1952,6 +2054,12 @@ document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
 			
 			// Загружаем данные для графика воды
 			await loadWaterChartData('day');
+		}
+		
+		// Проверяем оффлайн-очередь при старте (если были данные до перезагрузки)
+		if (navigator.onLine && offlineQueue.length > 0) {
+			console.log('🌐 Онлайн при старте, обрабатываю очередь...');
+			await processOfflineQueue();
 		}
 		
 		console.log('✓ Инициализация завершена');

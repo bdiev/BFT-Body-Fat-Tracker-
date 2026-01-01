@@ -7,7 +7,8 @@ const ASSETS = [
   '/manifest.json',
   '/service-worker.js',
   '/icons/icon-192.svg',
-  '/icons/icon-512.svg'
+  '/icons/icon-512.svg',
+  '/icons/siteicon.png'
 ];
 
 self.addEventListener('install', event => {
