@@ -139,9 +139,10 @@ function setSex(sex) {
 	maleBtn.classList.toggle('active', sex === 'male');
 	femaleBtn.classList.toggle('active', sex === 'female');
 	hipWrap.style.display = sex === 'female' ? 'block' : 'none';
-	currentNote.textContent = sex === 'female'
-		? 'Для девушек: (талия + бёдра − шея)'
-		: 'Для парней: (талия − шея)';
+	// Не показываем формулу по умолчанию, только результат после расчёта
+	if (!authenticated && currentResult.textContent === '—') {
+		currentNote.textContent = '';
+	}
 }
 
 function updateUserBadge() {
