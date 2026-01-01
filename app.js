@@ -15,6 +15,7 @@ let waterSettings = {
 	quick_buttons: []
 };
 let waterLogs = [];
+let waterChartData = [];
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ДАТЫ/ВРЕМЕНИ =====
 function formatLocalDateTime(timestamp, options = {}) {
@@ -852,6 +853,17 @@ async function loadWaterLogs() {
 	}
 }
 
+async function loadWaterChartData(period = 'day') {
+	try {
+		const logs = await apiCall(`/api/water-logs/period?period=${period}`);
+		waterChartData = logs;
+		console.log('✓ Загружены данные для графика воды:', waterChartData);
+		renderWaterChart();
+	} catch (err) {
+		console.error('✗ Ошибка загрузки данных для графика воды:', err);
+	}
+}
+
 function renderWaterQuickButtons() {
 	const container = document.getElementById('waterQuickButtons');
 	if (!container) return;
@@ -976,6 +988,85 @@ function showWaterNotification(message) {
 		notif.classList.remove('show');
 		setTimeout(() => notif.remove(), 300);
 	}, 2000);
+}
+
+function renderWaterChart() {
+	const chartSection = document.getElementById('waterChartSection');
+	if (!chartSection) return;
+	
+	const canvas = document.getElementById('waterChart');
+	if (!canvas) return;
+	
+	const ctx = canvas.getContext('2d');
+	const dpr = window.devicePixelRatio || 1;
+	const rect = canvas.getBoundingClientRect();
+	canvas.width = rect.width * dpr;
+	canvas.height = 300 * dpr;
+	canvas.style.width = '100%';
+	canvas.style.height = '300px';
+	ctx.scale(dpr, dpr);
+	
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	
+	if (waterChartData.length === 0) {
+		ctx.fillStyle = '#9aa7bd';
+		ctx.font = '16px "SF Pro Display"';
+		ctx.fillText('Нет данных для отображения', 20, 40);
+		return;
+	}
+	
+	const padding = 40;
+	const width = canvas.width / dpr;
+	const height = canvas.height / dpr;
+	const maxAmount = Math.max(...waterChartData.map(log => log.amount));
+	const scaleY = (amount) => height - padding - (amount / maxAmount) * (height - padding * 2);
+	
+	// Отрисовка осей
+	ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+	ctx.lineWidth = 1;
+	ctx.beginPath();
+	ctx.moveTo(padding, padding);
+	ctx.lineTo(padding, height - padding);
+	ctx.lineTo(width - padding, height - padding);
+	ctx.stroke();
+	
+	// Отрисовка данных
+	ctx.strokeStyle = 'rgba(10, 132, 255, 0.9)';
+	ctx.lineWidth = 2;
+	ctx.beginPath();
+	
+	waterChartData.forEach((log, index) => {
+		const x = padding + (index * (width - padding * 2) / (waterChartData.length - 1));
+		const y = scaleY(log.amount);
+		
+		if (index === 0) {
+			ctx.moveTo(x, y);
+		} else {
+			ctx.lineTo(x, y);
+		}
+		
+		// Отрисовка точек
+		ctx.beginPath();
+		ctx.arc(x, y, 5, 0, Math.PI * 2);
+		ctx.fillStyle = 'rgba(10, 132, 255, 0.9)';
+		ctx.fill();
+	});
+	
+	ctx.stroke();
+	
+	// Отрисовка меток
+	ctx.fillStyle = '#9aa7bd';
+	ctx.font = '12px "SF Pro Display"';
+	
+	waterChartData.forEach((log, index) => {
+		const x = padding + (index * (width - padding * 2) / (waterChartData.length - 1));
+		const y = scaleY(log.amount);
+		
+		const date = new Date(log.logged_at);
+		const label = `${date.getDate()}.${date.getMonth() + 1}`;
+		ctx.fillText(label, x - 15, height - padding + 20);
+		ctx.fillText(`${log.amount} мл`, x - 15, y - 10);
+	});
 }
 
 function openWaterSettingsModal() {
@@ -1506,6 +1597,39 @@ document.getElementById('waterSettingsModal')?.addEventListener('click', (e) => 
 	if (e.target === document.getElementById('waterSettingsModal')) closeWaterSettingsModal();
 });
 
+// Обработчики для графика воды
+document.getElementById('waterPeriodDay')?.addEventListener('click', () => {
+	loadWaterChartData('day');
+	document.getElementById('waterPeriodDay').classList.add('active');
+	document.getElementById('waterPeriodWeek').classList.remove('active');
+	document.getElementById('waterPeriodMonth').classList.remove('active');
+	document.getElementById('waterPeriodYear').classList.remove('active');
+});
+
+document.getElementById('waterPeriodWeek')?.addEventListener('click', () => {
+	loadWaterChartData('week');
+	document.getElementById('waterPeriodDay').classList.remove('active');
+	document.getElementById('waterPeriodWeek').classList.add('active');
+	document.getElementById('waterPeriodMonth').classList.remove('active');
+	document.getElementById('waterPeriodYear').classList.remove('active');
+});
+
+document.getElementById('waterPeriodMonth')?.addEventListener('click', () => {
+	loadWaterChartData('month');
+	document.getElementById('waterPeriodDay').classList.remove('active');
+	document.getElementById('waterPeriodWeek').classList.remove('active');
+	document.getElementById('waterPeriodMonth').classList.add('active');
+	document.getElementById('waterPeriodYear').classList.remove('active');
+});
+
+document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
+	loadWaterChartData('year');
+	document.getElementById('waterPeriodDay').classList.remove('active');
+	document.getElementById('waterPeriodWeek').classList.remove('active');
+	document.getElementById('waterPeriodMonth').classList.remove('active');
+	document.getElementById('waterPeriodYear').classList.add('active');
+});
+
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 (async () => {
 	try {
@@ -1549,6 +1673,15 @@ document.getElementById('waterSettingsModal')?.addEventListener('click', (e) => 
 		if (authenticated) {
 			await loadWaterSettings();
 			await loadWaterLogs();
+			
+			// Показываем секцию графика воды
+			const waterChartSection = document.getElementById('waterChartSection');
+			if (waterChartSection) {
+				waterChartSection.style.display = 'block';
+			}
+			
+			// Загружаем данные для графика воды
+			await loadWaterChartData('day');
 		}
 		
 		console.log('✓ Инициализация завершена');

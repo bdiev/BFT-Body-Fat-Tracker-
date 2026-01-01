@@ -268,6 +268,23 @@
 				</div>
 			</div>
 		</section>
+		
+		<!-- СЕКЦИЯ ГРАФИКА ВОДЫ -->
+		<section id="waterChartSection" class="card" style="margin-top: 40px; display: none;">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 20px;">
+				<div>
+					<strong>📊 График потребления воды</strong>
+					<p class="muted" style="margin:4px 0 0;">Отслеживай сколько воды ты выпил за разные периоды</p>
+				</div>
+				<div class="segmented" role="group" aria-label="Период">
+					<button id="waterPeriodDay" class="active" type="button">День</button>
+					<button id="waterPeriodWeek" type="button">Неделя</button>
+					<button id="waterPeriodMonth" type="button">Месяц</button>
+					<button id="waterPeriodYear" type="button">Год</button>
+				</div>
+			</div>
+			<canvas id="waterChart" height="300"></canvas>
+		</section>
 		</section>
 	</div>
 

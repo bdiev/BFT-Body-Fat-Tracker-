@@ -549,6 +549,47 @@ function notifyUserUpdate(userId, updateType, data) {
   }
 }
 
+// API для получения данных о потреблении воды за разные периоды
+app.get('/api/water-logs/period', authenticateToken, (req, res) => {
+  const { period } = req.query; // 'day', 'week', 'month', 'year'
+  let startDate;
+  const now = new Date();
+
+  switch (period) {
+    case 'day':
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 1);
+      break;
+    case 'week':
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 7);
+      break;
+    case 'month':
+      startDate = new Date(now);
+      startDate.setMonth(now.getMonth() - 1);
+      break;
+    case 'year':
+      startDate = new Date(now);
+      startDate.setFullYear(now.getFullYear() - 1);
+      break;
+    default:
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 1);
+  }
+
+  const query = `
+    SELECT id, amount, drink_type, logged_at
+    FROM water_logs
+    WHERE user_id = ? AND logged_at >= ?
+    ORDER BY logged_at DESC
+  `;
+
+  db.all(query, [req.userId, startDate.toISOString()], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Ошибка БД' });
+    res.json(rows || []);
+  });
+});
+
 server.listen(PORT, () => {
   console.log(`Сервер слушает http://localhost:${PORT}`);
 });
