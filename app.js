@@ -455,8 +455,10 @@ function setCardVisibilityStatus(message, tone = 'muted') {
 async function loadUserSettings() {
 	try {
 		const settings = await apiCall('/api/user-settings');
+		console.log('📥 Загруженные настройки с сервера:', settings);
 		userSettings.card_visibility = normalizeCardVisibility(settings.card_visibility);
 		userSettings.card_order = normalizeCardOrder(settings.card_order);
+		console.log('✓ Нормализованные настройки:', userSettings);
 		setCardVisibilityStatus('Настройки карточек загружены');
 	} catch (err) {
 		console.error('Не удалось загрузить настройки пользователя:', err.message);
@@ -472,6 +474,7 @@ async function loadUserSettings() {
 async function saveUserSettings(partialVisibility = {}, newOrder = null) {
 	const mergedVisibility = normalizeCardVisibility({ ...userSettings.card_visibility, ...partialVisibility });
 	const mergedOrder = normalizeCardOrder(newOrder ?? userSettings.card_order);
+	console.log('💾 saveUserSettings:', { partialVisibility, mergedVisibility, mergedOrder });
 	userSettings.card_visibility = mergedVisibility;
 	userSettings.card_order = mergedOrder;
 	applyCardVisibility();
@@ -483,6 +486,7 @@ async function saveUserSettings(partialVisibility = {}, newOrder = null) {
 			method: 'POST',
 			body: JSON.stringify({ card_visibility: mergedVisibility, card_order: mergedOrder })
 		});
+		console.log('✓ Настройки сохранены на сервер');
 		setCardVisibilityStatus('✓ Сохранено');
 	} catch (err) {
 		console.error('Не удалось сохранить настройки карточек:', err.message);
