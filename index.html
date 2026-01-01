@@ -24,8 +24,8 @@
 			<div class="modal-body">
 				<div id="loginForm">
 					<div style="margin-bottom: 16px;">
-						<label for="userSelect" class="label">Username</label>
-						<input id="userSelect" type="text" placeholder="Введи свой username" />
+						<label for="userSelect" class="label">Логин</label>
+						<input id="userSelect" type="text" placeholder="Введи свой логин" />
 					</div>
 					<div style="margin-bottom: 20px;">
 						<label for="passwordInput" class="label">Пароль</label>
@@ -36,11 +36,11 @@
 				
 				<div id="signupForm" style="display: none;">
 					<div style="margin-bottom: 16px;">
-						<label for="signupUsername" class="label">Придумай username</label>
+						<label for="signupUsername" class="label">Придумай логин</label>
 						<input id="signupUsername" type="text" placeholder="Например, bohdan123" />
 					</div>
 					<div style="margin-bottom: 16px;">
-						<label for="signupEmail" class="label">Email (опционально)</label>
+						<label for="signupEmail" class="label">Электронная почта (необязательно)</label>
 						<input id="signupEmail" type="email" placeholder="Например, bohdan@example.com" />
 					</div>
 					<div style="margin-bottom: 20px;">
@@ -115,48 +115,80 @@
 		<section id="landingPage" class="landing-page" style="display: none;">
 			<div class="landing-hero">
 				<div class="landing-content">
-					<h2 class="landing-title">Отслеживай свой прогресс</h2>
+					<h2 class="landing-title">Контроль над здоровьем в одном приложении</h2>
 					<p class="landing-description">
-						Body Fat Tracker помогает измерять и анализировать процент жира в теле с использованием проверенной формулы US Navy. 
-						Сохраняй результаты, смотри динамику на графике и достигай своих целей.
+						Body Fat Tracker & Water Counter - всё что нужно для отслеживания формы и гидратации. 
+						Рассчитай процент жира, следи за прогрессом и контролируй норму воды каждый день.
 					</p>
 					<div class="landing-features">
 						<div class="feature">
-							<div class="feature-icon">📊</div>
+							<div class="feature-icon">⚖️</div>
 							<div>
-								<h3>Простой расчёт</h3>
-								<p>Введи свои параметры и получи результат за секунду</p>
+								<h3>Расчет жира</h3>
+								<p>Используем Navy формулу для точного расчета процента жира в теле</p>
 							</div>
 						</div>
 						<div class="feature">
 							<div class="feature-icon">📈</div>
 							<div>
-								<h3>Отслеживай прогресс</h3>
-								<p>Сохраняй все результаты и смотри как меняется процент жира</p>
+								<h3>График прогресса</h3>
+								<p>Визуальная история всех измерений с трендом улучшений</p>
 							</div>
 						</div>
 						<div class="feature">
-							<div class="feature-icon">🔐</div>
+							<div class="feature-icon">💧</div>
 							<div>
-								<h3>Защита данных</h3>
-								<p>Твои личные данные хранятся безопасно и доступны только тебе</p>
+								<h3>Норма воды</h3>
+								<p>Автоматический расчет нормы воды с учетом веса и активности</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">⏰</div>
+							<div>
+								<h3>Счетчик воды</h3>
+								<p>Отслеживай выпитую воду быстрыми кнопками и историей</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">🔄</div>
+							<div>
+								<h3>Синхронизация</h3>
+								<p>Данные обновляются мгновенно на всех твоих устройствах</p>
 							</div>
 						</div>
 						<div class="feature">
 							<div class="feature-icon">📱</div>
 							<div>
 								<h3>Везде доступно</h3>
-								<p>Работает на всех устройствах, даже без интернета</p>
+								<p>Работает на телефоне, планшете и ПК, даже без интернета</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">🔐</div>
+							<div>
+								<h3>Защита данных</h3>
+								<p>Твои личные данные зашифрованы и доступны только тебе</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">⚡</div>
+							<div>
+								<h3>Просто и быстро</h3>
+								<p>Интуитивный интерфейс без сложностей и лишних настроек</p>
 							</div>
 						</div>
 					</div>
-					<button class="primary landing-btn" id="landingLoginBtn">Начать прямо сейчас</button>
+					<button class="primary landing-btn" id="landingLoginBtn">Начать прямо сейчас →</button>
 				</div>
 				<div class="landing-visual">
-					<div class="landing-card">
-						<div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-						<div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">15.5%</div>
-						<div style="font-size: 12px; color: var(--text-muted);">Процент жира</div>
+					<div class="landing-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));">
+						<div style="font-size: 32px; margin-bottom: 12px;">⚖️</div>
+						<div style="font-size: 20px; font-weight: 700; margin-bottom: 4px;">18.5%</div>
+						<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px;">Процент жира</div>
+						<div style="height: 1px; background: rgba(99, 102, 241, 0.2); margin-bottom: 16px;"></div>
+						<div style="font-size: 28px; margin-bottom: 12px;">💧</div>
+						<div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">1.8L</div>
+						<div style="font-size: 11px; color: var(--text-muted);">Норма воды</div>
 					</div>
 				</div>
 			</div>
