@@ -136,11 +136,15 @@
 	<div class="wrap">
 		<header id="mainHeader" style="display: none;">
 			<div>
-				<div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
-				<p class="pill" id="installPromptTrigger" style="cursor: pointer;">Работает везде • Даже без интернета</p>
-					<button class="pill-btn" id="openAuthModal">Войти</button>
-					<span class="pill-badge" id="current-user-pill" style="display:none;"></span>
-					<button class="pill-btn" id="logoutHeaderBtn" style="display:none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4); color: #fecaca;">Выйти</button>
+				<div class="header-bar">
+					<div class="header-bar__left">
+						<p class="pill" id="installPromptTrigger" style="cursor: pointer;">Работает везде • Даже без интернета</p>
+					</div>
+					<div class="header-bar__right">
+						<span class="pill-badge" id="current-user-pill" style="display:none;"></span>
+						<button class="pill-btn" id="openAuthModal">Войти</button>
+						<button class="pill-btn" id="logoutHeaderBtn" style="display:none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4); color: #fecaca;">Выйти</button>
+					</div>
 				</div>
 				<h1 class="title">Личный блокнот</h1>
 				<p class="subtitle">Веди учет своих данных и прогресса</p>

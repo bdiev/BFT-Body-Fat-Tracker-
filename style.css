@@ -79,7 +79,7 @@ body.page-ready .site-footer {
 	display: grid;
 	gap: 20px;
 	flex: 1;
-	padding-bottom: 0;
+	padding-bottom: 36px;
 	width: 100%;
 }
 
@@ -89,6 +89,28 @@ header {
 	align-items: flex-start;
 	justify-content: space-between;
 	flex-wrap: wrap;
+}
+
+.header-bar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 16px;
+	flex-wrap: wrap;
+}
+
+.header-bar__left {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.header-bar__right {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-left: auto;
 }
 
 .title {
