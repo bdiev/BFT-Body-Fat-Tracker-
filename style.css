@@ -89,6 +89,7 @@ header {
 	align-items: flex-start;
 	justify-content: space-between;
 	flex-wrap: wrap;
+	flex-direction: column;
 }
 
 .header-bar {
@@ -98,22 +99,23 @@ header {
 	gap: 16px;
 	margin-bottom: 16px;
 	flex-wrap: nowrap;
+	width: 100%;
 }
 
 .header-bar__left {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	min-width: 0;
 	flex-shrink: 1;
+	min-width: 0;
 }
 
 .header-bar__right {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	margin-left: auto;
 	flex-shrink: 0;
+	margin-left: auto;
 }
 
 @media (max-width: 768px) {
