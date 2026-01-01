@@ -428,13 +428,20 @@ function renderCardOrderEditor() {
 
 async function moveCardOrder(key, direction) {
 	const order = normalizeCardOrder(userSettings.card_order);
-	const idx = order.indexOf(key);
-	const target = idx + direction;
-	if (idx === -1 || target < 0 || target >= order.length) return;
-	[order[idx], order[target]] = [order[target], order[idx]];
-	userSettings.card_order = order;
+	const vis = normalizeCardVisibility(userSettings.card_visibility);
+	const visibleOrder = order.filter(k => vis[k]);
+	const visibleIdx = visibleOrder.indexOf(key);
+	const target = visibleIdx + direction;
+	if (visibleIdx === -1 || target < 0 || target >= visibleOrder.length) return;
+	
+	// Swap in visible order
+	[visibleOrder[visibleIdx], visibleOrder[target]] = [visibleOrder[target], visibleOrder[visibleIdx]];
+	
+	// Rebuild full order: visible first (in new order), then hidden
+	const newOrder = [...visibleOrder, ...order.filter(k => !vis[k])];
+	userSettings.card_order = newOrder;
 	applyCardOrder();
-	await saveUserSettings({}, order);
+	await saveUserSettings({}, newOrder);
 	renderCardOrderEditor();
 }
 
@@ -2080,7 +2087,8 @@ Object.entries(cardToggleMap).forEach(([id, key]) => {
 	const el = document.getElementById(id);
 	if (!el) return;
 	el.addEventListener('change', (e) => {
-		saveUserSettings({ [key]: e.target.checked });
+		const fullVisibility = { ...userSettings.card_visibility, [key]: e.target.checked };
+		saveUserSettings(fullVisibility);
 	});
 });
 
