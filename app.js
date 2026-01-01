@@ -887,9 +887,9 @@ function renderWaterLogs() {
 	
 	// Сортируем от новых к старым
 	const sorted = [...waterLogs].sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
-	
+
 	sorted.forEach(log => {
-		const time = new Date(log.logged_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+		const time = formatLocalDateTime(log.logged_at, { hour: '2-digit', minute: '2-digit' });
 		const logEl = document.createElement('div');
 		logEl.className = 'water-log-item';
 		logEl.innerHTML = `
