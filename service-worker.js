@@ -8,7 +8,8 @@ const ASSETS = [
   '/service-worker.js',
   '/icons/icon-192.svg',
   '/icons/icon-512.svg',
-  '/icons/siteicon.png'
+  '/icons/siteicon.png',
+  '/icons/tabicon.png'
 ];
 
 self.addEventListener('install', event => {
