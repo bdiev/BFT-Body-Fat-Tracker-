@@ -232,6 +232,12 @@ authModal?.addEventListener('click', (e) => {
 	if (e.target === authModal) closeModal();
 });
 
+// Обработчики для модали записи
+document.getElementById('closeEntryModal')?.addEventListener('click', closeEntryModal);
+document.getElementById('entryDetailModal')?.addEventListener('click', (e) => {
+	if (e.target === document.getElementById('entryDetailModal')) closeEntryModal();
+});
+
 // ===== ФУНКЦИИ ЛОГИКИ =====
 function setSex(sex) {
 	sexState.current = sex;
@@ -489,6 +495,146 @@ function toggleSignupForm() {
 	}
 }
 
+// ===== ФУНКЦИИ ДЛЯ МОДАЛИ ЗАПИСИ =====
+function getBodyFatAssessment(bf, sex) {
+	// Возрастная граница (в реальном приложении можно добавить поле возраста)
+	const age = 30; // Условный возраст для оценки
+	
+	if (sex === 'male') {
+		if (bf < 6) return { category: '🏆 Очень низко', color: '#ff6b6b', status: 'ВНИМАНИЕ' };
+		if (bf < 13) return { category: '💪 Спортивное', color: '#51cf66', status: 'Отлично' };
+		if (bf < 18) return { category: '✅ Норма', color: '#74c0fc', status: 'Здорово' };
+		if (bf < 25) return { category: '⚠️ Повышенно', color: '#ffd93d', status: 'Нужно работать' };
+		return { category: '🚨 Высоко', color: '#ff8787', status: 'Требует действий' };
+	} else {
+		if (bf < 13) return { category: '🏆 Очень низко', color: '#ff6b6b', status: 'ВНИМАНИЕ' };
+		if (bf < 20) return { category: '💪 Спортивное', color: '#51cf66', status: 'Отлично' };
+		if (bf < 26) return { category: '✅ Норма', color: '#74c0fc', status: 'Здорово' };
+		if (bf < 32) return { category: '⚠️ Повышенно', color: '#ffd93d', status: 'Нужно работать' };
+		return { category: '🚨 Высоко', color: '#ff8787', status: 'Требует действий' };
+	}
+}
+
+function getRecommendations(bf, sex) {
+	const assessment = getBodyFatAssessment(bf, sex);
+	let tips = [];
+	
+	if (assessment.status === 'ВНИМАНИЕ') {
+		tips = [
+			'⚠️ Процент жира критически низкий!',
+			'🍎 Увеличь калорийность питания',
+			'🥗 Добавь больше углеводов и жиров',
+			'😴 Достаточно отдыхай и спи 8+ часов',
+			'💪 Уменьши интенсивность тренировок'
+		];
+	} else if (assessment.status === 'Отлично') {
+		tips = [
+			'🎯 Ты на спортивном уровне!',
+			'🏋️ Продолжай регулярные тренировки',
+			'🥗 Поддерживай сбалансированное питание',
+			'📊 Отслеживай изменения еженедельно',
+			'⭐ Поздравляем с отличной формой!'
+		];
+	} else if (assessment.status === 'Здорово') {
+		tips = [
+			'✅ Процент жира в норме',
+			'🏃 Поддерживай регулярные тренировки',
+			'🥗 Ешь достаточно белка (1.6-2.0г на кг веса)',
+			'💧 Пей достаточно воды (2-3л в день)',
+			'🛏️ Спи 7-9 часов каждую ночь'
+		];
+	} else if (assessment.status === 'Нужно работать') {
+		tips = [
+			'🎯 Немного жира выше нормы',
+			'💪 Добавь кардио 3-4 раза в неделю',
+			'🥗 Уменьши калории на 300-500 ккал в день',
+			'🚶 Больше гуляй и двигайся в течение дня',
+			'📉 Ожидай снижения на 0.5-1% в месяц'
+		];
+	} else {
+		tips = [
+			'🚨 Жир существенно выше нормы',
+			'⏱️ Начни с 30-40 мин кардио 4-5 раз в неделю',
+			'🥗 Уменьши калории на 500 ккал, ешь белок',
+			'📊 Отслеживай прогресс еженедельно',
+			'🎯 Реалистичная цель: 0.5-1кг жира в месяц'
+		];
+	}
+	
+	return tips;
+}
+
+function showEntryDetail(entry) {
+	const assessment = getBodyFatAssessment(entry.bf, entry.sex);
+	const recommendations = getRecommendations(entry.bf, entry.sex);
+	const date = new Date(entry.timestamp).toLocaleDateString('ru-RU', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+	
+	const detailContent = document.getElementById('entryDetailContent');
+	detailContent.innerHTML = `
+		<div style="margin-bottom: 24px;">
+			<div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">${date}</div>
+			<div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px;">
+				<div style="font-size: 48px; font-weight: 700; color: ${assessment.color};">${entry.bf.toFixed(1)}%</div>
+				<div>
+					<div style="font-size: 14px; font-weight: 600; color: ${assessment.color};">${assessment.category}</div>
+					<div style="font-size: 12px; color: var(--text-muted);">${assessment.status}</div>
+				</div>
+			</div>
+		</div>
+		
+		<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+			<h3 style="margin: 0 0 12px; font-size: 14px; color: #a5b4fc;">📋 Твои измерения</h3>
+			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
+				<div>
+					<span style="color: var(--text-muted);">Пол:</span>
+					<div style="font-weight: 600;">${entry.sex === 'male' ? 'Мужчина' : 'Женщина'}</div>
+				</div>
+				<div>
+					<span style="color: var(--text-muted);">Рост:</span>
+					<div style="font-weight: 600;">${entry.height} см</div>
+				</div>
+				<div>
+					<span style="color: var(--text-muted);">Обхват шеи:</span>
+					<div style="font-weight: 600;">${entry.neck} см</div>
+				</div>
+				<div>
+					<span style="color: var(--text-muted);">Обхват талии:</span>
+					<div style="font-weight: 600;">${entry.waist} см</div>
+				</div>
+				${entry.sex === 'female' ? `
+				<div>
+					<span style="color: var(--text-muted);">Обхват бёдер:</span>
+					<div style="font-weight: 600;">${entry.hip} см</div>
+				</div>
+				` : ''}
+			</div>
+		</div>
+		
+		<div style="background: rgba(76, 175, 80, 0.08); border: 1px solid rgba(76, 175, 80, 0.2); border-radius: 12px; padding: 16px;">
+			<h3 style="margin: 0 0 12px; font-size: 14px; color: #81c784;">💡 Рекомендации</h3>
+			<div style="display: flex; flex-direction: column; gap: 8px;">
+				${recommendations.map(tip => `<div style="font-size: 14px; line-height: 1.4; color: var(--text);">${tip}</div>`).join('')}
+			</div>
+		</div>
+	`;
+	
+	const modal = document.getElementById('entryDetailModal');
+	modal.style.display = 'flex';
+	document.body.style.overflow = 'hidden';
+}
+
+function closeEntryModal() {
+	const modal = document.getElementById('entryDetailModal');
+	modal.style.display = 'none';
+	document.body.style.overflow = '';
+}
+
 // ===== РАСЧЁТ И СОХРАНЕНИЕ =====
 async function handleCalculate() {
 	if (!authenticated || !currentUser) {
@@ -573,7 +719,7 @@ function renderHistory() {
 		const date = new Date(item.timestamp);
 		const dateStr = date.toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 		row.innerHTML = `
-			<div>
+			<div style="flex: 1; cursor: pointer;">
 				<strong>${item.bf}%</strong> <small>${item.group}</small><br />
 				<small>${item.sex === 'male' ? '♂' : '♀'} ${item.height} см</small>
 			</div>
@@ -581,7 +727,16 @@ function renderHistory() {
 				<small>${dateStr}</small>
 				<button aria-label="Удалить" style="margin-top:6px; background:none; border:1px solid rgba(255,255,255,0.08); color:var(--muted); padding:6px 10px; border-radius:10px; cursor:pointer;">×</button>
 			</div>`;
-		row.querySelector('button').addEventListener('click', () => deleteEntry(item.id));
+		
+		// Клик на информацию открывает модаль
+		row.querySelector('div').addEventListener('click', () => showEntryDetail(item));
+		
+		// Клик на кнопку удаления
+		row.querySelector('button').addEventListener('click', (e) => {
+			e.stopPropagation();
+			deleteEntry(item.id);
+		});
+		
 		historyList.appendChild(row);
 	});
 }
