@@ -999,3 +999,90 @@ canvas {
 #entryDetailModal .modal-content::-webkit-scrollbar-thumb:hover {
 	background: rgba(99, 102, 241, 0.5);
 }
+/* СТИЛИ ДЛЯ ВОДЫ */
+.water-quick-btn {
+	background: linear-gradient(135deg, rgba(93, 173, 226, 0.1), rgba(116, 192, 252, 0.05));
+	border: 2px solid rgba(93, 173, 226, 0.3);
+	border-radius: 12px;
+	padding: 14px 12px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	color: var(--text);
+	font-weight: 600;
+	text-align: center;
+}
+
+.water-quick-btn:hover {
+	background: linear-gradient(135deg, rgba(93, 173, 226, 0.2), rgba(116, 192, 252, 0.1));
+	border-color: rgba(93, 173, 226, 0.5);
+	transform: translateY(-4px);
+	box-shadow: 0 8px 20px rgba(93, 173, 226, 0.15);
+}
+
+.water-quick-btn:active {
+	transform: translateY(-2px);
+}
+
+.water-log-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px 12px;
+	background: rgba(93, 173, 226, 0.08);
+	border-radius: 8px;
+	border: 1px solid rgba(93, 173, 226, 0.15);
+	font-size: 13px;
+	animation: slideInWater 0.3s ease;
+}
+
+@keyframes slideInWater {
+	from {
+		opacity: 0;
+		transform: translateX(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.water-log-item button:hover {
+	opacity: 0.8;
+}
+
+.water-notification {
+	position: fixed;
+	bottom: 20px;
+	left: 50%;
+	transform: translateX(-50%) translateY(120px);
+	background: linear-gradient(135deg, rgba(81, 207, 102, 0.9), rgba(130, 201, 30, 0.9));
+	color: white;
+	padding: 14px 24px;
+	border-radius: 12px;
+	font-weight: 600;
+	font-size: 14px;
+	backdrop-filter: blur(10px);
+	box-shadow: 0 8px 24px rgba(81, 207, 102, 0.3);
+	z-index: 999;
+	transition: transform 0.3s ease;
+	white-space: nowrap;
+}
+
+.water-notification.show {
+	transform: translateX(-50%) translateY(0);
+}
+
+/* Стили модали воды */
+#waterSettingsModal .modal-content {
+	max-width: 500px;
+}
+
+select {
+	font-family: inherit;
+	appearance: none;
+	padding-right: 30px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a5b4fc' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	padding-right: 36px;
+}

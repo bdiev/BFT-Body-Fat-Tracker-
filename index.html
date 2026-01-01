@@ -227,7 +227,90 @@
 			</div>
 			<canvas id="chart" height="280"></canvas>
 		</section>
+
+		<!-- СЕКЦИЯ ОТСЛЕЖИВАНИЯ ВОДЫ -->
+		<section class="card" style="margin-top: 40px;">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 20px;">
+				<div>
+					<strong>💧 Отслеживание воды</strong>
+					<p class="muted" style="margin:4px 0 0;">Сколько воды ты выпил сегодня</p>
+				</div>
+				<button class="pill-btn" id="waterSettingsBtn" style="font-size: 12px; padding: 8px 14px;">⚙️ Настройки</button>
+			</div>
+
+			<!-- Шкала прогресса воды -->
+			<div style="margin-bottom: 24px;">
+				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+					<span class="muted" style="font-size: 12px;">Выпито</span>
+					<span id="waterProgress" style="font-weight: 600; color: #74c0fc;">0 / 2000 мл</span>
+				</div>
+				<div id="waterBar" style="height: 24px; background: rgba(99, 102, 241, 0.08); border-radius: 12px; overflow: hidden; border: 1px solid rgba(99, 102, 241, 0.15);">
+					<div id="waterBarFill" style="height: 100%; background: linear-gradient(90deg, #5dade2, #74c0fc); width: 0%; transition: width 0.3s ease; border-radius: 12px;"></div>
+				</div>
+			</div>
+
+			<!-- Быстрые кнопки для добавления напитков -->
+			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px;" id="waterQuickButtons">
+				<!-- Будут заполнены JS -->
+			</div>
+
+			<!-- История воды за день -->
+			<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 14px;">
+				<div style="font-size: 12px; color: #a5b4fc; margin-bottom: 12px; font-weight: 600;">📋 История за сегодня</div>
+				<div id="waterLogsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+					<p class="muted" style="font-size: 12px;">Добавляй воду и напитки</p>
+				</div>
+			</div>
 		</section>
+		</section>
+	</div>
+
+	<!-- Модаль настроек воды -->
+	<div class="modal-overlay" id="waterSettingsModal">
+		<div class="modal-content" style="max-width: 500px;">
+			<div class="modal-header">
+				<h2>Настройки отслеживания воды</h2>
+				<button class="modal-close" id="closeWaterSettingsModal" aria-label="Закрыть">✕</button>
+			</div>
+			<div class="modal-body">
+				<div style="margin-bottom: 20px;">
+					<label for="waterWeight" class="label">Твой вес (кг)</label>
+					<input id="waterWeight" type="number" placeholder="Например, 75" style="width: 100%; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);" />
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<label for="waterActivity" class="label">Уровень активности</label>
+					<select id="waterActivity" style="width: 100%; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);">
+						<option value="low">🪑 Низкая (сидячая работа)</option>
+						<option value="moderate">🚶 Умеренная (обычный образ жизни)</option>
+						<option value="high">🏃 Высокая (много спорта)</option>
+					</select>
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<label for="waterResetTime" class="label">Время ежедневного сброса</label>
+					<input id="waterResetTime" type="time" value="00:00" style="width: 100%; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);" />
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<label for="waterGoal" class="label">Дневная норма (мл)</label>
+					<input id="waterGoal" type="number" placeholder="Например, 2000" style="width: 100%; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);" />
+					<p class="muted" style="font-size: 12px; margin-top: 6px;">Оставь пусто, и норма рассчитается автоматически</p>
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<label class="label">Быстрые кнопки</label>
+					<div id="quickButtonsList" style="display: flex; flex-direction: column; gap: 8px;">
+						<!-- Будут заполнены JS -->
+					</div>
+					<button id="addQuickButtonBtn" class="ghost" style="width: 100%; margin-top: 10px; padding: 10px;">+ Добавить кнопку</button>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button class="primary" id="saveWaterSettingsBtn">Сохранить</button>
+				<button class="ghost" id="closeWaterSettingsBtn">Отмена</button>
+			</div>
+		</div>
 	</div>
 
 	<!-- Модаль для подробной информации о записи -->

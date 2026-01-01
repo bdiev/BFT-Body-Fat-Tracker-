@@ -6,6 +6,16 @@ let history = [];
 let userId = null;
 let ws = null; // WebSocket для реал-тайма
 
+// Состояние воды
+let waterSettings = {
+	weight: 70,
+	activity: 'moderate',
+	daily_goal: 2000,
+	reset_time: '00:00',
+	quick_buttons: []
+};
+let waterLogs = [];
+
 // ===== API ФУНКЦИИ =====
 async function apiCall(endpoint, options = {}) {
 	try {
@@ -418,6 +428,10 @@ async function handleLogin() {
 		drawChart();
 		updateLast(history[history.length - 1]);
 		
+		// Загружаем настройки воды и логи
+		await loadWaterSettings();
+		await loadWaterLogs();
+		
 		// Закрываем модаль после успешного входа
 		setTimeout(() => {
 			closeModal();
@@ -447,6 +461,7 @@ async function handleLogout() {
 		currentUser = null;
 		userId = null;
 		history = [];
+		waterLogs = [];
 		userSelect.value = '';
 		passwordInput.value = '';
 		authStatus.textContent = 'До свидания! Ты вышел.';
@@ -632,6 +647,247 @@ function closeEntryModal() {
 	const modal = document.getElementById('entryDetailModal');
 	modal.classList.remove('active');
 	document.body.style.overflow = '';
+}
+
+// ===== ФУНКЦИИ ДЛЯ ОТСЛЕЖИВАНИЯ ВОДЫ =====
+function calculateDailyWaterGoal(weight, activity) {
+	let baseGoal = weight * 30; // 30мл на 1кг веса
+	
+	if (activity === 'low') baseGoal *= 0.9;
+	else if (activity === 'moderate') baseGoal *= 1;
+	else if (activity === 'high') baseGoal *= 1.3;
+	
+	return Math.round(baseGoal / 100) * 100; // Округляем до 100мл
+}
+
+async function loadWaterSettings() {
+	try {
+		const settings = await apiCall('/api/water-settings');
+		waterSettings = settings;
+		console.log('✓ Загружены настройки воды:', waterSettings);
+		renderWaterQuickButtons();
+	} catch (err) {
+		console.error('✗ Ошибка загрузки настроек воды:', err);
+	}
+}
+
+async function loadWaterLogs() {
+	try {
+		const logs = await apiCall('/api/water-logs');
+		waterLogs = logs;
+		console.log('✓ Загружены логи воды:', waterLogs);
+		renderWaterProgress();
+		renderWaterLogs();
+	} catch (err) {
+		console.error('✗ Ошибка загрузки логов воды:', err);
+	}
+}
+
+function renderWaterQuickButtons() {
+	const container = document.getElementById('waterQuickButtons');
+	if (!container) return;
+	
+	container.innerHTML = '';
+	
+	if (!waterSettings.quick_buttons || waterSettings.quick_buttons.length === 0) {
+		container.innerHTML = '<p class="muted" style="grid-column: 1/-1; text-align: center; font-size: 12px;">Добавь кнопки в настройках</p>';
+		return;
+	}
+	
+	waterSettings.quick_buttons.forEach(btn => {
+		const button = document.createElement('button');
+		button.className = 'water-quick-btn';
+		button.innerHTML = `
+			<div style="font-size: 18px; margin-bottom: 4px;">${btn.name.split(' ')[0]}</div>
+			<div style="font-size: 12px; color: var(--text-muted);">${btn.amount}мл</div>
+		`;
+		button.addEventListener('click', () => addWaterLog(btn.amount, btn.name.split(' ')[1] || 'вода'));
+		container.appendChild(button);
+	});
+}
+
+function renderWaterProgress() {
+	const totalToday = waterLogs.reduce((sum, log) => sum + log.amount, 0);
+	const goal = waterSettings.daily_goal || 2000;
+	const percentage = Math.min((totalToday / goal) * 100, 100);
+	
+	document.getElementById('waterProgress').textContent = `${totalToday} / ${goal} мл`;
+	document.getElementById('waterBarFill').style.width = percentage + '%';
+	
+	// Цвет шкалы в зависимости от процента
+	const barFill = document.getElementById('waterBarFill');
+	if (percentage < 50) {
+		barFill.style.background = 'linear-gradient(90deg, #5dade2, #74c0fc)';
+	} else if (percentage < 100) {
+		barFill.style.background = 'linear-gradient(90deg, #51cf66, #82c91e)';
+	} else {
+		barFill.style.background = 'linear-gradient(90deg, #51cf66, #37b24d)';
+	}
+}
+
+function renderWaterLogs() {
+	const container = document.getElementById('waterLogsList');
+	if (!container) return;
+	
+	if (waterLogs.length === 0) {
+		container.innerHTML = '<p class="muted" style="font-size: 12px;">Добавляй воду и напитки</p>';
+		return;
+	}
+	
+	container.innerHTML = '';
+	
+	// Сортируем от новых к старым
+	const sorted = [...waterLogs].sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
+	
+	sorted.forEach(log => {
+		const time = new Date(log.logged_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+		const logEl = document.createElement('div');
+		logEl.className = 'water-log-item';
+		logEl.innerHTML = `
+			<div>
+				<strong>${log.amount}мл</strong> ${log.drink_type}
+				<div style="font-size: 11px; color: var(--text-muted);">${time}</div>
+			</div>
+			<button style="background: none; border: none; color: #ff8787; cursor: pointer; font-size: 14px;">×</button>
+		`;
+		logEl.querySelector('button').addEventListener('click', () => deleteWaterLog(log.id));
+		container.appendChild(logEl);
+	});
+}
+
+async function addWaterLog(amount, drinkType = 'вода') {
+	try {
+		await apiCall('/api/water-logs', {
+			method: 'POST',
+			body: JSON.stringify({ amount, drink_type: drinkType })
+		});
+		
+		// Обновляем локальный список
+		await loadWaterLogs();
+		
+		// Показываем короткое уведомление
+		showWaterNotification(`✅ Добавлено ${amount}мл`);
+	} catch (err) {
+		console.error('✗ Ошибка добавления воды:', err);
+	}
+}
+
+async function deleteWaterLog(id) {
+	try {
+		await apiCall(`/api/water-logs/${id}`, { method: 'DELETE' });
+		await loadWaterLogs();
+		showWaterNotification('✅ Удалено');
+	} catch (err) {
+		console.error('✗ Ошибка удаления:', err);
+	}
+}
+
+function showWaterNotification(message) {
+	const notif = document.createElement('div');
+	notif.className = 'water-notification';
+	notif.textContent = message;
+	document.body.appendChild(notif);
+	
+	setTimeout(() => {
+		notif.classList.add('show');
+	}, 10);
+	
+	setTimeout(() => {
+		notif.classList.remove('show');
+		setTimeout(() => notif.remove(), 300);
+	}, 2000);
+}
+
+function openWaterSettingsModal() {
+	const modal = document.getElementById('waterSettingsModal');
+	document.getElementById('waterWeight').value = waterSettings.weight || 70;
+	document.getElementById('waterActivity').value = waterSettings.activity || 'moderate';
+	document.getElementById('waterResetTime').value = waterSettings.reset_time || '00:00';
+	document.getElementById('waterGoal').value = waterSettings.daily_goal || 2000;
+	
+	renderQuickButtonsList();
+	
+	modal.classList.add('active');
+	document.body.style.overflow = 'hidden';
+}
+
+function closeWaterSettingsModal() {
+	const modal = document.getElementById('waterSettingsModal');
+	modal.classList.remove('active');
+	document.body.style.overflow = '';
+}
+
+function renderQuickButtonsList() {
+	const container = document.getElementById('quickButtonsList');
+	if (!container) return;
+	
+	container.innerHTML = '';
+	
+	(waterSettings.quick_buttons || []).forEach((btn, idx) => {
+		const div = document.createElement('div');
+		div.style.cssText = 'display: flex; gap: 8px; align-items: center; padding: 8px; background: rgba(99, 102, 241, 0.08); border-radius: 8px;';
+		div.innerHTML = `
+			<input type="text" value="${btn.name}" placeholder="Название" style="flex: 1; padding: 6px 8px; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 6px; background: rgba(99, 102, 241, 0.05); color: var(--text); font-size: 12px;" />
+			<input type="number" value="${btn.amount}" placeholder="Мл" min="1" style="width: 60px; padding: 6px 8px; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 6px; background: rgba(99, 102, 241, 0.05); color: var(--text); font-size: 12px;" />
+			<button style="padding: 6px 10px; background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600;">×</button>
+		`;
+		
+		const nameInput = div.querySelector('input[type="text"]');
+		const amountInput = div.querySelector('input[type="number"]');
+		const deleteBtn = div.querySelector('button');
+		
+		deleteBtn.addEventListener('click', () => {
+			waterSettings.quick_buttons.splice(idx, 1);
+			renderQuickButtonsList();
+		});
+		
+		nameInput.addEventListener('change', () => {
+			waterSettings.quick_buttons[idx].name = nameInput.value;
+		});
+		
+		amountInput.addEventListener('change', () => {
+			waterSettings.quick_buttons[idx].amount = parseInt(amountInput.value);
+		});
+		
+		container.appendChild(div);
+	});
+}
+
+async function saveWaterSettings() {
+	const weight = parseFloat(document.getElementById('waterWeight').value);
+	const activity = document.getElementById('waterActivity').value;
+	const resetTime = document.getElementById('waterResetTime').value;
+	let dailyGoal = parseInt(document.getElementById('waterGoal').value);
+	
+	if (!weight || weight <= 0) {
+		alert('Укажи вес');
+		return;
+	}
+	
+	// Если дневная норма не указана, рассчитываем
+	if (!dailyGoal || dailyGoal <= 0) {
+		dailyGoal = calculateDailyWaterGoal(weight, activity);
+	}
+	
+	try {
+		await apiCall('/api/water-settings', {
+			method: 'POST',
+			body: JSON.stringify({
+				weight,
+				activity,
+				daily_goal: dailyGoal,
+				reset_time: resetTime,
+				quick_buttons: waterSettings.quick_buttons
+			})
+		});
+		
+		await loadWaterSettings();
+		closeWaterSettingsModal();
+		showWaterNotification('✅ Настройки сохранены');
+	} catch (err) {
+		console.error('✗ Ошибка сохранения:', err);
+		alert('Ошибка при сохранении');
+	}
 }
 
 // ===== РАСЧЁТ И СОХРАНЕНИЕ =====
@@ -998,6 +1254,21 @@ document.getElementById('saveNewPassword')?.addEventListener('click', handleChan
 document.getElementById('cancelChangePassword')?.addEventListener('click', toggleChangePasswordForm);
 document.getElementById('landingLoginBtn')?.addEventListener('click', openModal);
 
+// Обработчики для воды
+document.getElementById('waterSettingsBtn')?.addEventListener('click', openWaterSettingsModal);
+document.getElementById('closeWaterSettingsModal')?.addEventListener('click', closeWaterSettingsModal);
+document.getElementById('closeWaterSettingsBtn')?.addEventListener('click', closeWaterSettingsModal);
+document.getElementById('saveWaterSettingsBtn')?.addEventListener('click', saveWaterSettings);
+document.getElementById('addQuickButtonBtn')?.addEventListener('click', () => {
+	if (!waterSettings.quick_buttons) waterSettings.quick_buttons = [];
+	waterSettings.quick_buttons.push({ name: '💧 Вода', amount: 500 });
+	renderQuickButtonsList();
+});
+
+document.getElementById('waterSettingsModal')?.addEventListener('click', (e) => {
+	if (e.target === document.getElementById('waterSettingsModal')) closeWaterSettingsModal();
+});
+
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 (async () => {
 	console.log('🚀 Инициализация приложения...');
@@ -1009,6 +1280,13 @@ document.getElementById('landingLoginBtn')?.addEventListener('click', openModal)
 	resizeCanvas();
 	drawChart();
 	updateLast(authenticated ? history[history.length - 1] : null);
+	
+	// Загружаем воду если пользователь авторизован
+	if (authenticated) {
+		await loadWaterSettings();
+		await loadWaterLogs();
+	}
+	
 	console.log('✓ Инициализация завершена');
 	
 	window.addEventListener('resize', () => {

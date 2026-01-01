@@ -92,6 +92,40 @@ db.serialize(() => {
     if (err) console.error('Ошибка создания таблицы entries:', err);
     else console.log('✓ Таблица entries готова');
   });
+
+  // Таблица настроек воды
+  db.run(`
+    CREATE TABLE IF NOT EXISTS water_settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL UNIQUE,
+      weight REAL,
+      activity TEXT DEFAULT 'moderate',
+      daily_goal INTEGER DEFAULT 2000,
+      reset_time TEXT DEFAULT '00:00',
+      quick_buttons TEXT DEFAULT '[]',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `, (err) => {
+    if (err) console.error('Ошибка создания таблицы water_settings:', err);
+    else console.log('✓ Таблица water_settings готова');
+  });
+
+  // Таблица логов воды
+  db.run(`
+    CREATE TABLE IF NOT EXISTS water_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      amount INTEGER,
+      drink_type TEXT,
+      logged_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `, (err) => {
+    if (err) console.error('Ошибка создания таблицы water_logs:', err);
+    else console.log('✓ Таблица water_logs готова');
+  });
   
   // Проверяем количество пользователей в БД
   db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
@@ -333,6 +367,100 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
     console.error('Ошибка смены пароля:', err);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
+});
+
+// ===== API ВОДА =====
+// Получить настройки воды пользователя
+app.get('/api/water-settings', authenticateToken, (req, res) => {
+  db.get('SELECT * FROM water_settings WHERE user_id = ?', [req.userId], (err, row) => {
+    if (err) return res.status(500).json({ error: 'Ошибка БД' });
+    if (!row) {
+      // Если нет настроек, создаём значения по умолчанию
+      return res.json({
+        weight: 70,
+        activity: 'moderate',
+        daily_goal: 2000,
+        reset_time: '00:00',
+        quick_buttons: [
+          { name: '💧 Вода 500мл', amount: 500 },
+          { name: '🥤 Сок 250мл', amount: 250 },
+          { name: '☕ Кофе 200мл', amount: 200 }
+        ]
+      });
+    }
+    res.json({
+      ...row,
+      quick_buttons: JSON.parse(row.quick_buttons || '[]')
+    });
+  });
+});
+
+// Сохранить настройки воды
+app.post('/api/water-settings', authenticateToken, (req, res) => {
+  const { weight, activity, daily_goal, reset_time, quick_buttons } = req.body;
+  
+  db.run(
+    `INSERT INTO water_settings (user_id, weight, activity, daily_goal, reset_time, quick_buttons)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+     weight = ?, activity = ?, daily_goal = ?, reset_time = ?, quick_buttons = ?, updated_at = CURRENT_TIMESTAMP`,
+    [
+      req.userId, weight, activity, daily_goal, reset_time, JSON.stringify(quick_buttons),
+      weight, activity, daily_goal, reset_time, JSON.stringify(quick_buttons)
+    ],
+    (err) => {
+      if (err) return res.status(500).json({ error: 'Ошибка сохранения' });
+      res.json({ message: 'Настройки сохранены' });
+    }
+  );
+});
+
+// Получить логи воды за сегодня
+app.get('/api/water-logs', authenticateToken, (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  const query = `
+    SELECT id, amount, drink_type, logged_at 
+    FROM water_logs 
+    WHERE user_id = ? AND DATE(logged_at) = ?
+    ORDER BY logged_at DESC
+  `;
+  
+  db.all(query, [req.userId, today], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Ошибка БД' });
+    res.json(rows || []);
+  });
+});
+
+// Добавить лог воды
+app.post('/api/water-logs', authenticateToken, (req, res) => {
+  const { amount, drink_type } = req.body;
+  
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Некорректное количество' });
+  }
+  
+  db.run(
+    'INSERT INTO water_logs (user_id, amount, drink_type) VALUES (?, ?, ?)',
+    [req.userId, amount, drink_type || 'вода'],
+    function(err) {
+      if (err) return res.status(500).json({ error: 'Ошибка сохранения' });
+      res.json({ 
+        id: this.lastID,
+        amount, 
+        drink_type: drink_type || 'вода',
+        logged_at: new Date().toISOString()
+      });
+    }
+  );
+});
+
+// Удалить лог воды
+app.delete('/api/water-logs/:id', authenticateToken, (req, res) => {
+  db.run('DELETE FROM water_logs WHERE id = ? AND user_id = ?', [req.params.id, req.userId], function(err) {
+    if (err) return res.status(500).json({ error: 'Ошибка удаления' });
+    if (this.changes === 0) return res.status(404).json({ error: 'Лог не найден' });
+    res.json({ message: 'Удалено' });
+  });
 });
 
 // Возвращаем фронт
