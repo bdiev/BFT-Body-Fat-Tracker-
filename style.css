@@ -28,8 +28,10 @@ body {
 	font-family: -apple-system, 'Inter', 'SF Pro Display', system-ui, 'Segoe UI', sans-serif;
 	color: var(--text-dark);
 	background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #1e253e 100%);
-	padding: 40px 20px 60px;
+	padding: 40px 20px 0;
 	position: relative;
+	display: flex;
+	flex-direction: column;
 }
 
 body::before {
@@ -52,6 +54,8 @@ body::before {
 	margin: 0 auto;
 	display: grid;
 	gap: 28px;
+	flex: 1;
+	padding-bottom: 40px;
 }
 
 header {
@@ -1238,7 +1242,8 @@ select {
 
 /* Footer */
 .site-footer {
-	margin-top: 80px;
+	margin-top: auto;
+	width: 100%;
 	padding: 32px 20px;
 	background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.05));
 	border-top: 1px solid rgba(99, 102, 241, 0.15);
