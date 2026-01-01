@@ -228,11 +228,13 @@ function updateUserBadge() {
 	const userDisplayName = document.getElementById('userDisplayName');
 	const landingPage = document.getElementById('landingPage');
 	const appContent = document.getElementById('appContent');
+	const mainHeader = document.getElementById('mainHeader');
 	
 	if (authenticated && currentUser) {
 		// Скрываем landing page, показываем приложение
 		landingPage.style.display = 'none';
 		appContent.style.display = 'block';
+		mainHeader.style.display = 'flex';
 		
 		currentUserPill.textContent = '✓ Ты: ' + currentUser;
 		currentUserPill.classList.remove('status-warn');
@@ -250,6 +252,7 @@ function updateUserBadge() {
 		// Показываем landing page, скрываем приложение
 		landingPage.style.display = 'block';
 		appContent.style.display = 'none';
+		mainHeader.style.display = 'none';
 		
 		currentUserPill.style.display = 'none';
 		currentUserPill.classList.remove('status-ok');
