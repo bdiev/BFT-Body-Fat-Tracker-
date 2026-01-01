@@ -15,6 +15,8 @@ let waterSettings = {
 	quick_buttons: []
 };
 let waterLogs = [];
+let currentWaterPeriod = 'day';
+let currentWaterChartPeriod = 'day';
 let waterChartData = [];
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ДАТЫ/ВРЕМЕНИ =====
@@ -43,6 +45,28 @@ function getLastWaterResetBoundary(resetTime = '00:00') {
 	boundary.setHours(hh, mm, 0, 0);
 	if (boundary > now) {
 		boundary.setDate(boundary.getDate() - 1);
+	}
+	return boundary;
+}
+
+function getPeriodBoundary(period = 'day') {
+	const now = new Date();
+	const boundary = new Date(now);
+	switch (period) {
+		case 'day':
+			boundary.setDate(now.getDate() - 1);
+			break;
+		case 'week':
+			boundary.setDate(now.getDate() - 7);
+			break;
+		case 'month':
+			boundary.setMonth(now.getMonth() - 1);
+			break;
+		case 'year':
+			boundary.setFullYear(now.getFullYear() - 1);
+			break;
+		default:
+			boundary.setDate(now.getDate() - 1);
 	}
 	return boundary;
 }
@@ -856,7 +880,8 @@ async function loadWaterLogs() {
 async function loadWaterChartData(period = 'day') {
 	try {
 		const logs = await apiCall(`/api/water-logs/period?period=${period}`);
-		waterChartData = logs;
+		waterChartData = logs.slice().reverse(); // в хронологическом порядке
+		currentWaterChartPeriod = period;
 		console.log('✓ Загружены данные для графика воды:', waterChartData);
 		renderWaterChart();
 	} catch (err) {
@@ -923,22 +948,41 @@ function renderWaterLogs() {
 	}
 	
 	container.innerHTML = '';
-	
-	const boundary = getLastWaterResetBoundary(waterSettings.reset_time);
 
-	// Сортируем от новых к старым (учитываем нормализацию таймзоны)
+	const periodBoundary = getPeriodBoundary(currentWaterPeriod);
+	const dayBoundary = getLastWaterResetBoundary(waterSettings.reset_time);
+	const boundary = currentWaterPeriod === 'day' ? dayBoundary : periodBoundary;
+
+	// Сортируем от новых к старым (учитываем нормализацию таймзоны) и фильтруем по выбранному периоду
 	const sorted = [...waterLogs]
 		.sort((a, b) => normalizeTimestamp(b.logged_at) - normalizeTimestamp(a.logged_at))
 		.filter(log => normalizeTimestamp(log.logged_at) >= boundary);
 
+	const formatter = (ts) => {
+		switch (currentWaterPeriod) {
+			case 'day':
+				return formatLocalDateTime(normalizeTimestamp(ts), { hour: '2-digit', minute: '2-digit' });
+			case 'week': {
+				const weekday = formatLocalDateTime(normalizeTimestamp(ts), { weekday: 'short' });
+				return weekday;
+			}
+			case 'month':
+				return formatLocalDateTime(normalizeTimestamp(ts), { day: '2-digit', month: 'short' });
+			case 'year':
+				return formatLocalDateTime(normalizeTimestamp(ts), { month: 'short' });
+			default:
+				return formatLocalDateTime(normalizeTimestamp(ts), { hour: '2-digit', minute: '2-digit' });
+		}
+	};
+
 	sorted.forEach(log => {
-		const time = formatLocalDateTime(normalizeTimestamp(log.logged_at), { hour: '2-digit', minute: '2-digit' });
+		const label = formatter(log.logged_at);
 		const logEl = document.createElement('div');
 		logEl.className = 'water-log-item';
 		logEl.innerHTML = `
 			<div>
 				<strong>${log.amount}мл</strong> ${log.drink_type}
-				<div style="font-size: 11px; color: var(--text-muted);">${time}</div>
+				<div style="font-size: 11px; color: var(--text-muted);">${label}</div>
 			</div>
 			<button style="background: none; border: none; color: #ff8787; cursor: pointer; font-size: 14px;">×</button>
 		`;
@@ -1057,14 +1101,29 @@ function renderWaterChart() {
 	// Отрисовка меток
 	ctx.fillStyle = '#9aa7bd';
 	ctx.font = '12px "SF Pro Display"';
-	
+
 	waterChartData.forEach((log, index) => {
 		const x = padding + (index * (width - padding * 2) / (waterChartData.length - 1));
 		const y = scaleY(log.amount);
-		
-		const date = new Date(log.logged_at);
-		const label = `${date.getDate()}.${date.getMonth() + 1}`;
-		ctx.fillText(label, x - 15, height - padding + 20);
+		const ts = normalizeTimestamp(log.logged_at);
+		let label;
+		switch (currentWaterChartPeriod) {
+			case 'day':
+				label = formatLocalDateTime(ts, { hour: '2-digit', minute: '2-digit' });
+				break;
+			case 'week':
+				label = formatLocalDateTime(ts, { weekday: 'short' });
+				break;
+			case 'month':
+				label = formatLocalDateTime(ts, { day: '2-digit', month: 'short' });
+				break;
+			case 'year':
+				label = formatLocalDateTime(ts, { month: 'short' });
+				break;
+			default:
+				label = formatLocalDateTime(ts, { day: '2-digit', month: 'short' });
+		}
+		ctx.fillText(label, x - 20, height - padding + 20);
 		ctx.fillText(`${log.amount} мл`, x - 15, y - 10);
 	});
 }
@@ -1599,7 +1658,9 @@ document.getElementById('waterSettingsModal')?.addEventListener('click', (e) => 
 
 // Обработчики для графика воды
 document.getElementById('waterPeriodDay')?.addEventListener('click', () => {
+	currentWaterPeriod = 'day';
 	loadWaterChartData('day');
+	renderWaterLogs();
 	document.getElementById('waterPeriodDay').classList.add('active');
 	document.getElementById('waterPeriodWeek').classList.remove('active');
 	document.getElementById('waterPeriodMonth').classList.remove('active');
@@ -1607,7 +1668,9 @@ document.getElementById('waterPeriodDay')?.addEventListener('click', () => {
 });
 
 document.getElementById('waterPeriodWeek')?.addEventListener('click', () => {
+	currentWaterPeriod = 'week';
 	loadWaterChartData('week');
+	renderWaterLogs();
 	document.getElementById('waterPeriodDay').classList.remove('active');
 	document.getElementById('waterPeriodWeek').classList.add('active');
 	document.getElementById('waterPeriodMonth').classList.remove('active');
@@ -1615,7 +1678,9 @@ document.getElementById('waterPeriodWeek')?.addEventListener('click', () => {
 });
 
 document.getElementById('waterPeriodMonth')?.addEventListener('click', () => {
+	currentWaterPeriod = 'month';
 	loadWaterChartData('month');
+	renderWaterLogs();
 	document.getElementById('waterPeriodDay').classList.remove('active');
 	document.getElementById('waterPeriodWeek').classList.remove('active');
 	document.getElementById('waterPeriodMonth').classList.add('active');
@@ -1623,7 +1688,9 @@ document.getElementById('waterPeriodMonth')?.addEventListener('click', () => {
 });
 
 document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
+	currentWaterPeriod = 'year';
 	loadWaterChartData('year');
+	renderWaterLogs();
 	document.getElementById('waterPeriodDay').classList.remove('active');
 	document.getElementById('waterPeriodWeek').classList.remove('active');
 	document.getElementById('waterPeriodMonth').classList.remove('active');
