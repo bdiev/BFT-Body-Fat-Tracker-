@@ -223,6 +223,12 @@ function openModal() {
 	authModal.classList.remove('closing');
 	authModal.classList.add('active');
 	document.body.style.overflow = 'hidden';
+	// Очищаем ошибки при открытии модалки
+	const authStatus = document.getElementById('authStatus');
+	if (authStatus) {
+		authStatus.textContent = 'Твои данные защищены и хранятся на сервере.';
+		authStatus.classList.remove('status-warn');
+	}
 }
 
 function closeModal() {
@@ -385,6 +391,7 @@ async function handleSignup() {
 async function handleLogin() {
 	const username = userSelect.value.trim();
 	const password = passwordInput.value.trim();
+	const rememberMe = document.getElementById('rememberMeCheckbox')?.checked || false;
 	
 	if (!username || !password) {
 		authStatus.textContent = '❌ Заполни username и пароль';
@@ -400,6 +407,15 @@ async function handleLogin() {
 			method: 'POST',
 			body: JSON.stringify({ username, password })
 		});
+		
+		// Сохраняем логин и пароль если выбран "Запомнить меня"
+		if (rememberMe) {
+			localStorage.setItem('rememberMe_username', username);
+			localStorage.setItem('rememberMe_password', password);
+		} else {
+			localStorage.removeItem('rememberMe_username');
+			localStorage.removeItem('rememberMe_password');
+		}
 		
 		// Даём браузеру время обработать cookies
 		await new Promise(resolve => setTimeout(resolve, 200));
@@ -455,6 +471,11 @@ async function handleLogout() {
 			ws.close();
 			ws = null;
 		}
+		
+		// Удаляем сохраненные данные входа
+		localStorage.removeItem('rememberMe_username');
+		localStorage.removeItem('rememberMe_password');
+		document.getElementById('rememberMeCheckbox').checked = false;
 		
 		await apiCall('/api/logout', { method: 'POST' });
 		authenticated = false;
@@ -1326,7 +1347,24 @@ document.getElementById('waterSettingsModal')?.addEventListener('click', (e) => 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 (async () => {
 	console.log('🚀 Инициализация приложения...');
-	await loadUserData();
+	
+	// Проверяем есть ли сохраненные данные входа
+	const savedUsername = localStorage.getItem('rememberMe_username');
+	const savedPassword = localStorage.getItem('rememberMe_password');
+	
+	if (savedUsername && savedPassword) {
+		console.log('🔄 Найдены сохраненные данные входа, попытка автоматического входа...');
+		userSelect.value = savedUsername;
+		passwordInput.value = savedPassword;
+		document.getElementById('rememberMeCheckbox').checked = true;
+		
+		// Автоматически логинимся
+		await handleLogin();
+	} else {
+		// Обычная загрузка данных пользователя (через cookies если есть)
+		await loadUserData();
+	}
+	
 	console.log('✓ После loadUserData - authenticated:', authenticated, 'currentUser:', currentUser, 'история:', history.length);
 	setSex('male');
 	updateUserBadge();
