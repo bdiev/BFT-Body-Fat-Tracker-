@@ -299,7 +299,8 @@ const DEFAULT_CARD_VISIBILITY = {
   history: true,
   chart: true,
   waterTracker: true,
-  waterChart: true
+  waterChart: true,
+  lastResult: true
 };
 
 function parseCardVisibility(raw) {
@@ -311,7 +312,8 @@ function parseCardVisibility(raw) {
       history: parsed.history !== false,
       chart: parsed.chart !== false,
       waterTracker: parsed.waterTracker !== false,
-      waterChart: parsed.waterChart !== false
+      waterChart: parsed.waterChart !== false,
+      lastResult: parsed.lastResult !== false
     };
   } catch (e) {
     console.warn('Не удалось распарсить card_visibility, использую дефолт:', e.message);
@@ -339,7 +341,8 @@ app.post('/api/user-settings', authenticateToken, (req, res) => {
     history: incoming.history !== false,
     chart: incoming.chart !== false,
     waterTracker: incoming.waterTracker !== false,
-    waterChart: incoming.waterChart !== false
+    waterChart: incoming.waterChart !== false,
+    lastResult: incoming.lastResult !== false
   };
 
   const serialized = JSON.stringify(cardVisibility);
