@@ -719,104 +719,53 @@ function showEntryDetail(entry) {
 			minute: '2-digit'
 		});
 		
-		const detailContent = document.getElementById('entryDetailContent');
-		if (!detailContent) {
-			console.error('❌ entryDetailContent не найден в DOM');
+		const detailPanel = document.getElementById('entryDetailInline');
+		if (!detailPanel) {
+			console.error('❌ entryDetailInline не найден в DOM');
 			return;
 		}
-		
-		detailContent.innerHTML = `
-			<div style="margin-bottom: 24px;">
-				<div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">${date}</div>
-				<div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px;">
-					<div style="font-size: 48px; font-weight: 700; color: ${assessment.color};">${entry.bf.toFixed(1)}%</div>
-					<div>
-						<div style="font-size: 14px; font-weight: 600; color: ${assessment.color};">${assessment.category}</div>
-						<div style="font-size: 12px; color: var(--text-muted);">${assessment.status}</div>
-					</div>
+
+		detailPanel.innerHTML = `
+			<div class="meta">${date}</div>
+			<div class="headline">
+				<div class="value" style="color:${assessment.color};">${entry.bf.toFixed(1)}%</div>
+				<div>
+					<div style="font-size:14px; font-weight:600; color:${assessment.color};">${assessment.category}</div>
+					<div class="status">${assessment.status}</div>
 				</div>
 			</div>
-			
-			<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-				<h3 style="margin: 0 0 12px; font-size: 14px; color: #a5b4fc;">📋 Твои измерения</h3>
-				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
-					<div>
-						<span style="color: var(--text-muted);">Пол:</span>
-						<div style="font-weight: 600;">${entry.sex === 'male' ? 'Мужчина' : 'Женщина'}</div>
-					</div>
-					<div>
-						<span style="color: var(--text-muted);">Рост:</span>
-						<div style="font-weight: 600;">${entry.height} см</div>
-					</div>
-					<div>
-						<span style="color: var(--text-muted);">Обхват шеи:</span>
-						<div style="font-weight: 600;">${entry.neck} см</div>
-					</div>
-					<div>
-						<span style="color: var(--text-muted);">Обхват талии:</span>
-						<div style="font-weight: 600;">${entry.waist} см</div>
-					</div>
-					${entry.sex === 'female' ? `
-					<div>
-						<span style="color: var(--text-muted);">Обхват бёдер:</span>
-						<div style="font-weight: 600;">${entry.hip} см</div>
-					</div>
-					` : ''}
+
+			<div style="background: rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:16px; margin-bottom:16px;">
+				<h3>📋 Твои измерения</h3>
+				<div class="grid">
+					<div><div class="chip">Пол</div><div class="chip-value">${entry.sex === 'male' ? 'Мужчина' : 'Женщина'}</div></div>
+					<div><div class="chip">Рост</div><div class="chip-value">${entry.height} см</div></div>
+					<div><div class="chip">Обхват шеи</div><div class="chip-value">${entry.neck} см</div></div>
+					<div><div class="chip">Обхват талии</div><div class="chip-value">${entry.waist} см</div></div>
+					${entry.sex === 'female' ? `<div><div class="chip">Обхват бёдер</div><div class="chip-value">${entry.hip} см</div></div>` : ''}
 				</div>
 			</div>
-			
-			<div style="background: rgba(76, 175, 80, 0.08); border: 1px solid rgba(76, 175, 80, 0.2); border-radius: 12px; padding: 16px;">
-				<h3 style="margin: 0 0 12px; font-size: 14px; color: #81c784;">💡 Рекомендации</h3>
-				<div style="display: flex; flex-direction: column; gap: 8px;">
-					${recommendations.map(tip => `<div style="font-size: 14px; line-height: 1.4; color: var(--text);">${tip}</div>`).join('')}
+
+			<div style="background: rgba(76,175,80,0.08); border:1px solid rgba(76,175,80,0.2); border-radius:12px; padding:16px;">
+				<h3 style="color:#81c784;">💡 Рекомендации</h3>
+				<div class="tips">
+					${recommendations.map(tip => `<div class="tip">${tip}</div>`).join('')}
 				</div>
 			</div>
 		`;
-		
-		const modal = document.getElementById('entryDetailModal');
-		if (!modal) {
-			console.error('❌ entryDetailModal не найден в DOM');
-			return;
-		}
-		
-		console.log('✓ Добавляю класс active к модалке');
-		modal.classList.add('active');
-		// Жестко проставляем стили, чтобы перебить любые каскады
-		modal.style.opacity = '1';
-		modal.style.visibility = 'visible';
-		modal.style.pointerEvents = 'auto';
-		document.body.style.overflow = 'hidden';
 
-		// Диагностика CSS
-		const computedStyle = window.getComputedStyle(modal);
-		console.log('📊 Computed styles модалки:', {
-			display: computedStyle.display,
-			opacity: computedStyle.opacity,
-			visibility: computedStyle.visibility,
-			zIndex: computedStyle.zIndex,
-			pointerEvents: computedStyle.pointerEvents
-		});
-		
-		const modalContent = modal.querySelector('.modal-content');
-		if (modalContent) {
-			const contentStyle = window.getComputedStyle(modalContent);
-			console.log('📊 Computed styles контента:', {
-				display: contentStyle.display,
-				background: contentStyle.background,
-				visibility: contentStyle.visibility
-			});
-		}
-		
-		console.log('✓ Модалка открыта');
+		detailPanel.style.display = 'block';
+		console.log('✓ Панель деталей показана');
+		// Скролл к деталям для мобильных
+		detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 	} catch (err) {
 		console.error('❌ Ошибка в showEntryDetail:', err);
 	}
 }
 
 function closeEntryModal() {
-	const modal = document.getElementById('entryDetailModal');
-	modal.classList.remove('active');
-	document.body.style.overflow = '';
+	const panel = document.getElementById('entryDetailInline');
+	if (panel) panel.style.display = 'none';
 }
 
 // ===== ФУНКЦИИ ДЛЯ ОТСЛЕЖИВАНИЯ ВОДЫ =====

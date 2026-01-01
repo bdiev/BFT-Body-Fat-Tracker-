@@ -961,21 +961,15 @@ canvas {
 	bottom: 0;
 	background: rgba(0, 0, 0, 0.6);
 	backdrop-filter: blur(4px);
-	display: flex;
+	display: none;
 	justify-content: center;
 	align-items: center;
 	z-index: 2000;
 	padding: 20px;
-	opacity: 0;
-	visibility: hidden;
-	pointer-events: none;
-	transition: opacity 0.24s ease;
 }
 
 #entryDetailModal.active {
-	opacity: 1 !important;
-	visibility: visible !important;
-	pointer-events: auto !important;
+	display: flex;
 }
 
 #entryDetailModal .modal-content {
@@ -986,6 +980,74 @@ canvas {
 	scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
 	opacity: 1 !important;
 	transform: translateY(0) scale(1) !important;
+}
+
+/* Инлайн-панель деталей записи (без модалки) */
+.entry-detail-inline {
+	margin-top: 16px;
+	padding: 16px;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 16px;
+	background: linear-gradient(145deg, rgba(44, 50, 77, 0.6), rgba(28, 31, 47, 0.8));
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+	transition: all 0.2s ease;
+}
+
+.entry-detail-inline h3 {
+	margin: 0 0 12px;
+	font-size: 14px;
+	color: #a5b4fc;
+}
+
+.entry-detail-inline .meta {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin-bottom: 8px;
+}
+
+.entry-detail-inline .headline {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.entry-detail-inline .headline .value {
+	font-size: 48px;
+	font-weight: 700;
+}
+
+.entry-detail-inline .headline .status {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.entry-detail-inline .grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 12px;
+}
+
+.entry-detail-inline .chip {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.entry-detail-inline .chip-value {
+	font-weight: 600;
+}
+
+.entry-detail-inline .tips {
+	margin-top: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.entry-detail-inline .tips .tip {
+	font-size: 14px;
+	line-height: 1.4;
+	color: var(--text);
 }
 
 #entryDetailModal .modal-content::-webkit-scrollbar {
