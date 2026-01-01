@@ -801,6 +801,34 @@ function toggleChangePasswordForm() {
 	}
 }
 
+// Экспорт БД
+async function exportDatabase() {
+	try {
+		const response = await fetch('/api/export-db', {
+			credentials: 'include'
+		});
+		
+		if (!response.ok) {
+			throw new Error('Не удалось скачать БД');
+		}
+		
+		const blob = await response.blob();
+		const url = window.URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'BFT-database.db';
+		document.body.appendChild(a);
+		a.click();
+		window.URL.revokeObjectURL(url);
+		document.body.removeChild(a);
+		
+		console.log('✓ БД успешно скачана');
+	} catch (err) {
+		console.error('Ошибка экспорта БД:', err);
+		alert('❌ Ошибка при скачивании БД: ' + err.message);
+	}
+}
+
 // ===== EVENT LISTENERS =====
 maleBtn.addEventListener('click', () => setSex('male'));
 femaleBtn.addEventListener('click', () => setSex('female'));
@@ -817,6 +845,7 @@ backToLoginBtn?.addEventListener('click', toggleSignupForm);
 document.getElementById('toggleChangePassword')?.addEventListener('click', toggleChangePasswordForm);
 document.getElementById('saveNewPassword')?.addEventListener('click', handleChangePassword);
 document.getElementById('cancelChangePassword')?.addEventListener('click', toggleChangePasswordForm);
+document.getElementById('exportDbBtn')?.addEventListener('click', exportDatabase);
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 (async () => {

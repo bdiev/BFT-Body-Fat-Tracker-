@@ -340,6 +340,22 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Экспорт БД (требует аутентификации)
+app.get('/api/export-db', authenticateToken, (req, res) => {
+  if (!fs.existsSync(DB_PATH)) {
+    return res.status(404).json({ error: 'Файл БД не найден' });
+  }
+  
+  res.download(DB_PATH, 'BFT-database.db', (err) => {
+    if (err) {
+      console.error('Ошибка скачивания БД:', err);
+      res.status(500).json({ error: 'Ошибка при скачивании БД' });
+    } else {
+      console.log(`✓ БД скачана пользователем ${req.username}`);
+    }
+  });
+});
+
 // ===== WebSocket для реал-тайма =====
 // Хранилище активных подключений: { userId: Set<WebSocket> }
 const wsConnections = new Map();
