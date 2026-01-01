@@ -767,7 +767,8 @@ function showEntryDetail(entry) {
 	`;
 	
 	const modal = document.getElementById('entryDetailModal');
-		modal.classList.add('active');
+	modal.classList.add('active');
+	document.body.style.overflow = 'hidden';
 }
 
 function closeEntryModal() {
@@ -1139,10 +1140,11 @@ function renderHistory() {
 	sorted.forEach(item => {
 		const row = document.createElement('div');
 		row.className = 'history-item';
+		row.style.cursor = 'pointer';
 		const date = new Date(item.timestamp);
 		const dateStr = date.toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 		row.innerHTML = `
-			<div style="flex: 1; cursor: pointer;">
+			<div style="flex: 1;">
 				<strong>${item.bf}%</strong> <small>${item.group}</small><br />
 				<small>${item.sex === 'male' ? '♂' : '♀'} ${item.height} см</small>
 			</div>
@@ -1151,8 +1153,12 @@ function renderHistory() {
 				<button aria-label="Удалить" style="margin-top:6px; background:none; border:1px solid rgba(255,255,255,0.08); color:var(--muted); padding:6px 10px; border-radius:10px; cursor:pointer;">×</button>
 			</div>`;
 		
-		// Клик на информацию открывает модаль
-		row.querySelector('div').addEventListener('click', () => showEntryDetail(item));
+		// Клик на строку открывает модаль (но не на кнопку удаления)
+		row.addEventListener('click', (e) => {
+			if (e.target.tagName !== 'BUTTON') {
+				showEntryDetail(item);
+			}
+		});
 		
 		// Клик на кнопку удаления
 		row.querySelector('button').addEventListener('click', (e) => {
