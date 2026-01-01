@@ -22,6 +22,18 @@ function formatLocalDateTime(timestamp, options = {}) {
 	return new Date(timestamp).toLocaleString('ru-RU', { timeZone, ...options });
 }
 
+// Нормализация временной метки: если сервер вернул строку без таймзоны ("YYYY-MM-DD HH:mm:ss"),
+// добавляем 'Z', чтобы трактовать её как UTC и затем показать в локальном времени пользователя.
+function normalizeTimestamp(ts) {
+	if (ts instanceof Date) return ts;
+	if (typeof ts === 'number') return new Date(ts);
+	if (typeof ts === 'string') {
+		const hasTZ = /[zZ]|[+-]\d\d:?\d\d/.test(ts);
+		return new Date(hasTZ ? ts : `${ts}Z`);
+	}
+	return new Date(ts);
+}
+
 // ===== API ФУНКЦИИ =====
 async function apiCall(endpoint, options = {}) {
 	try {
@@ -885,11 +897,11 @@ function renderWaterLogs() {
 	
 	container.innerHTML = '';
 	
-	// Сортируем от новых к старым
-	const sorted = [...waterLogs].sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
+	// Сортируем от новых к старым (учитываем нормализацию таймзоны)
+	const sorted = [...waterLogs].sort((a, b) => normalizeTimestamp(b.logged_at) - normalizeTimestamp(a.logged_at));
 
 	sorted.forEach(log => {
-		const time = formatLocalDateTime(log.logged_at, { hour: '2-digit', minute: '2-digit' });
+		const time = formatLocalDateTime(normalizeTimestamp(log.logged_at), { hour: '2-digit', minute: '2-digit' });
 		const logEl = document.createElement('div');
 		logEl.className = 'water-log-item';
 		logEl.innerHTML = `
