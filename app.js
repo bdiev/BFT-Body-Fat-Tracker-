@@ -103,14 +103,22 @@ const maxPoints = 24;
 const chartHeight = 320;
 
 // ===== ФУНКЦИИ ДЛЯ МОДАЛЕЙ =====
+const MODAL_ANIM_MS = 240;
+
 function openModal() {
+	authModal.classList.remove('closing');
 	authModal.classList.add('active');
 	document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-	authModal.classList.remove('active');
-	document.body.style.overflow = '';
+	// Добавляем класс closing для плавного исчезновения
+	authModal.classList.add('closing');
+	setTimeout(() => {
+		authModal.classList.remove('active');
+		authModal.classList.remove('closing');
+		document.body.style.overflow = '';
+	}, MODAL_ANIM_MS);
 }
 
 openAuthModal?.addEventListener('click', openModal);
