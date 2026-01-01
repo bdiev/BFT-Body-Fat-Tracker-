@@ -781,8 +781,12 @@ function showEntryDetail(entry) {
 		
 		console.log('✓ Добавляю класс active к модалке');
 		modal.classList.add('active');
+		// Жестко проставляем стили, чтобы перебить любые каскады
+		modal.style.opacity = '1';
+		modal.style.visibility = 'visible';
+		modal.style.pointerEvents = 'auto';
 		document.body.style.overflow = 'hidden';
-		
+
 		// Диагностика CSS
 		const computedStyle = window.getComputedStyle(modal);
 		console.log('📊 Computed styles модалки:', {
