@@ -186,6 +186,22 @@ header {
 	gap: 24px;
 }
 
+.cards-grid.grid-layout {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 24px;
+	align-items: stretch;
+}
+
+.cards-grid.grid-layout > * {
+	height: 100%;
+}
+
+.cards-grid.grid-layout .card {
+	display: flex;
+	flex-direction: column;
+}
+
 .card {
 	background: var(--panel);
 	border: var(--border);

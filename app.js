@@ -307,6 +307,31 @@ function normalizeCardOrder(order = []) {
 	return [...filtered, ...missing];
 }
 
+const CARD_LAYOUT_KEY = 'cardLayoutMode';
+
+function getStoredCardLayout() {
+	const stored = localStorage.getItem(CARD_LAYOUT_KEY);
+	return stored === 'grid' ? 'grid' : 'stack';
+}
+
+function setStoredCardLayout(layout) {
+	try {
+		localStorage.setItem(CARD_LAYOUT_KEY, layout === 'grid' ? 'grid' : 'stack');
+	} catch (e) {
+		console.error('Не удалось сохранить раскладку карточек:', e);
+	}
+}
+
+function applyCardLayout(layout) {
+	const container = document.getElementById('cardsContainer');
+	if (!container) return;
+	const isGrid = layout === 'grid';
+	container.classList.toggle('grid-layout', isGrid);
+	if (cardLayoutToggle) {
+		cardLayoutToggle.checked = isGrid;
+	}
+}
+
 const cardOrderNames = {
 	form: 'Форма расчёта',
 	history: 'История прогресса',
@@ -718,6 +743,10 @@ const signupPasswordInput = document.getElementById('signupPassword');
 const signupBtn = document.getElementById('signupBtn');
 const toggleSignupBtn = document.getElementById('toggleSignup');
 const backToLoginBtn = document.getElementById('backToLogin');
+const cardLayoutToggle = document.getElementById('cardLayoutToggle');
+
+// Применяем сохранённую раскладку карточек сразу при загрузке скрипта
+applyCardLayout(getStoredCardLayout());
 
 let viewW = 0;
 let viewH = 0;
@@ -2116,6 +2145,12 @@ Object.entries(cardToggleMap).forEach(([id, key]) => {
 		const fullVisibility = { ...userSettings.card_visibility, [key]: e.target.checked };
 		saveUserSettings(fullVisibility);
 	});
+});
+
+cardLayoutToggle?.addEventListener('change', (e) => {
+	const layout = e.target.checked ? 'grid' : 'stack';
+	setStoredCardLayout(layout);
+	applyCardLayout(layout);
 });
 
 // Обработчики для воды
