@@ -773,6 +773,16 @@ function setSex(sex) {
 	maleBtn.classList.toggle('active', sex === 'male');
 	femaleBtn.classList.toggle('active', sex === 'female');
 	hipWrap.style.display = sex === 'female' ? 'block' : 'none';
+	
+	// Меняем цвет кнопки расчета в зависимости от пола
+	if (sex === 'female') {
+		calcBtn.style.background = 'linear-gradient(135deg, rgba(244, 114, 182, 0.8), rgba(236, 72, 153, 0.7))';
+		calcBtn.style.boxShadow = '0 12px 28px rgba(244, 114, 182, 0.3)';
+	} else {
+		calcBtn.style.background = 'linear-gradient(135deg, #6366f1, #8b5cf6)';
+		calcBtn.style.boxShadow = '0 12px 28px rgba(99, 102, 241, 0.3)';
+	}
+	
 	// Не показываем формулу по умолчанию, только результат после расчёта
 	if (!authenticated && currentResult.textContent === '—') {
 		currentNote.textContent = '';
