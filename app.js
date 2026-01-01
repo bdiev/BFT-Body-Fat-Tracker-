@@ -328,8 +328,14 @@ async function handleLogout() {
 		renderHistory();
 		drawChart();
 		updateLast();
-		// После логаута закрываем модалку плавно
-		setTimeout(closeModal, 120);
+		// Убираем сообщение через 2 секунды
+		setTimeout(() => {
+			authStatus.textContent = '';
+			authStatus.classList.remove('status-warn');
+		}, 2000);
+
+		// Закрываем модалку через 3 секунды после выхода
+		setTimeout(closeModal, 3000);
 	} catch (err) {
 		authStatus.textContent = '❌ Ошибка выхода';
 		authStatus.classList.add('status-warn');
