@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+const WebSocket = require('ws');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -231,11 +233,15 @@ app.post('/api/history', authenticateToken, (req, res) => {
     [req.userId, sex, height, neck, waist, hip, bf, group],
     function(err) {
       if (err) return res.status(500).json({ error: 'Ошибка БД' });
-      res.json({
+      const result = {
         id: this.lastID,
         sex, height, neck, waist, hip, bf, group,
         timestamp: new Date().toISOString()
-      });
+      };
+      res.json(result);
+      
+      // Отправляем уведомление всем подключённым клиентам этого пользователя
+      notifyUserUpdate(req.userId, 'entryAdded', result);
     }
   );
 });
@@ -251,6 +257,9 @@ app.delete('/api/history/:id', authenticateToken, (req, res) => {
       if (err) return res.status(500).json({ error: 'Ошибка БД' });
       if (this.changes === 0) return res.status(404).json({ error: 'Запись не найдена' });
       res.json({ message: 'Удалено' });
+      
+      // Отправляем уведомление всем подключённым клиентам этого пользователя
+      notifyUserUpdate(req.userId, 'entryDeleted', { id: parseInt(id) });
     }
   );
 });
@@ -319,6 +328,62 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
+// ===== WebSocket для реал-тайма =====
+// Хранилище активных подключений: { userId: Set<WebSocket> }
+const wsConnections = new Map();
+
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+  let userId = null;
+
+  // При подключении ждём сообщение с userId из JWT
+  ws.on('message', (data) => {
+    try {
+      const msg = JSON.parse(data);
+      if (msg.type === 'auth') {
+        // Клиент отправляет userId при подключении
+        userId = msg.userId;
+        if (!wsConnections.has(userId)) {
+          wsConnections.set(userId, new Set());
+        }
+        wsConnections.get(userId).add(ws);
+        console.log(`WebSocket: пользователь ${userId} подключился. Всего подключений: ${wsConnections.get(userId).size}`);
+        ws.send(JSON.stringify({ type: 'auth', status: 'ok' }));
+      }
+    } catch (e) {
+      console.error('WebSocket сообщение:', e.message);
+    }
+  });
+
+  ws.on('close', () => {
+    if (userId && wsConnections.has(userId)) {
+      wsConnections.get(userId).delete(ws);
+      console.log(`WebSocket: пользователь ${userId} отключился. Осталось подключений: ${wsConnections.get(userId).size}`);
+      if (wsConnections.get(userId).size === 0) {
+        wsConnections.delete(userId);
+      }
+    }
+  });
+
+  ws.on('error', (err) => {
+    console.error('WebSocket ошибка:', err.message);
+  });
+});
+
+// Функция для отправки обновления всем клиентам пользователя
+function notifyUserUpdate(userId, updateType, data) {
+  if (wsConnections.has(userId)) {
+    const message = JSON.stringify({ type: 'update', updateType, data });
+    wsConnections.get(userId).forEach(ws => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message);
+      }
+    });
+  }
+}
+
+server.listen(PORT, () => {
   console.log(`Сервер слушает http://localhost:${PORT}`);
 });

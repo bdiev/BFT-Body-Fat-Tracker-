@@ -4,6 +4,7 @@ let currentUser = null;
 let authenticated = false;
 let history = [];
 let userId = null;
+let ws = null; // WebSocket для реал-тайма
 
 // ===== API ФУНКЦИИ =====
 async function apiCall(endpoint, options = {}) {
@@ -32,6 +33,77 @@ async function apiCall(endpoint, options = {}) {
 	}
 }
 
+// ===== WebSocket для реал-тайма =====
+function connectWebSocket(userId) {
+	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+	const wsUrl = `${protocol}//${window.location.host}`;
+	
+	console.log('WebSocket: подключаемся к', wsUrl);
+	ws = new WebSocket(wsUrl);
+	
+	ws.onopen = () => {
+		console.log('WebSocket: подключены');
+		// Отправляем userId для идентификации
+		ws.send(JSON.stringify({ type: 'auth', userId }));
+	};
+	
+	ws.onmessage = (event) => {
+		try {
+			const msg = JSON.parse(event.data);
+			console.log('WebSocket сообщение:', msg);
+			
+			if (msg.type === 'update') {
+				if (msg.updateType === 'entryAdded') {
+					// Новая запись добавлена другим устройством
+					const newEntry = {
+						id: msg.data.id,
+						sex: msg.data.sex,
+						height: msg.data.height,
+						neck: msg.data.neck,
+						waist: msg.data.waist,
+						hip: msg.data.hip,
+						bf: msg.data.bf,
+						group: msg.data.group,
+						timestamp: new Date(msg.data.timestamp).getTime()
+					};
+					history.push(newEntry);
+					console.log('📊 Новая запись получена в реал-тайме:', newEntry);
+					renderHistory();
+					drawChart();
+					updateLast(newEntry);
+				} else if (msg.updateType === 'entryDeleted') {
+					// Запись удалена другим устройством
+					const idx = history.findIndex(e => e.id === msg.data.id);
+					if (idx >= 0) {
+						history.splice(idx, 1);
+						console.log('🗑️ Запись удалена в реал-тайме. ID:', msg.data.id);
+						renderHistory();
+						drawChart();
+						updateLast(history[history.length - 1]);
+					}
+				}
+			}
+		} catch (e) {
+			console.error('WebSocket обработка сообщения:', e);
+		}
+	};
+	
+	ws.onerror = (err) => {
+		console.error('WebSocket ошибка:', err);
+	};
+	
+	ws.onclose = () => {
+		console.log('WebSocket: отключены');
+		// Попытаемся переподключиться через 3 сек
+		setTimeout(() => {
+			if (authenticated && userId) {
+				connectWebSocket(userId);
+			}
+		}, 3000);
+	};
+}
+
+
 async function loadUserData() {
 	try {
 		const user = await apiCall('/api/me');
@@ -52,6 +124,10 @@ async function loadUserData() {
 			timestamp: new Date(e.timestamp).getTime()
 		}));
 		console.log('✓ Обработанная история:', history);
+		
+		// Подключаемся к WebSocket для реал-тайма
+		connectWebSocket(userId);
+		
 		return true;
 	} catch (err) {
 		console.error('✗ Ошибка loadUserData:', err);
@@ -316,6 +392,12 @@ async function handleLogin() {
 
 async function handleLogout() {
 	try {
+		// Закрываем WebSocket перед выходом
+		if (ws) {
+			ws.close();
+			ws = null;
+		}
+		
 		await apiCall('/api/logout', { method: 'POST' });
 		authenticated = false;
 		currentUser = null;
