@@ -117,76 +117,68 @@
 				<div class="landing-content">
 					<h2 class="landing-title">Контроль над здоровьем в одном приложении</h2>
 					<p class="landing-description">
-						Body Fat Tracker & Water Counter - всё что нужно для отслеживания формы и гидратации.
+						Body Fat Tracker & Water Counter - всё что нужно для отслеживания формы и гидратации. 
+						Рассчитай процент жира, следи за прогрессом и контролируй норму воды каждый день.
 					</p>
-					
-					<!-- Карусель с функциями -->
-					<div class="carousel-container">
-						<button class="carousel-btn carousel-prev" id="carouselPrev" aria-label="Предыдущая">‹</button>
-						
-						<div class="carousel-viewport">
-							<div class="carousel-track" id="carouselTrack">
-								<div class="carousel-feature" data-time="5000">
-									<div class="feature-icon">⚖️</div>
-									<h3>Расчет жира</h3>
-									<p>Используем Navy формулу для точного расчета процента жира в теле</p>
-								</div>
-								<div class="carousel-feature" data-time="5000">
-									<div class="feature-icon">📈</div>
-									<h3>График прогресса</h3>
-									<p>Визуальная история всех измерений с трендом улучшений</p>
-								</div>
-								<div class="carousel-feature" data-time="6000">
-									<div class="feature-icon">💧</div>
-									<h3>Норма воды</h3>
-									<p>Автоматический расчет нормы воды с учетом веса и активности</p>
-								</div>
-								<div class="carousel-feature" data-time="5500">
-									<div class="feature-icon">⏰</div>
-									<h3>Счетчик воды</h3>
-									<p>Отслеживай выпитую воду быстрыми кнопками и историей</p>
-								</div>
-								<div class="carousel-feature" data-time="5500">
-									<div class="feature-icon">🔄</div>
-									<h3>Синхронизация</h3>
-									<p>Данные обновляются мгновенно на всех твоих устройствах</p>
-								</div>
-								<div class="carousel-feature" data-time="5500">
-									<div class="feature-icon">📱</div>
-									<h3>Везде доступно</h3>
-									<p>Работает на телефоне, планшете и ПК, даже без интернета</p>
-								</div>
-								<div class="carousel-feature" data-time="5500">
-									<div class="feature-icon">🔐</div>
-									<h3>Защита данных</h3>
-									<p>Твои личные данные зашифрованы и доступны только тебе</p>
-								</div>
-								<div class="carousel-feature" data-time="5500">
-									<div class="feature-icon">⚡</div>
-									<h3>Просто и быстро</h3>
-									<p>Интуитивный интерфейс без сложностей и лишних настроек</p>
-								</div>
+					<div class="landing-features">
+						<div class="feature">
+							<div class="feature-icon">⚖️</div>
+							<div>
+								<h3>Расчет жира</h3>
+								<p>Используем Navy формулу для точного расчета процента жира в теле</p>
 							</div>
 						</div>
-						
-						<button class="carousel-btn carousel-next" id="carouselNext" aria-label="Следующая">›</button>
+						<div class="feature">
+							<div class="feature-icon">📈</div>
+							<div>
+								<h3>График прогресса</h3>
+								<p>Визуальная история всех измерений с трендом улучшений</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">💧</div>
+							<div>
+								<h3>Норма воды</h3>
+								<p>Автоматический расчет нормы воды с учетом веса и активности</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">⏰</div>
+							<div>
+								<h3>Счетчик воды</h3>
+								<p>Отслеживай выпитую воду быстрыми кнопками и историей</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">🔄</div>
+							<div>
+								<h3>Синхронизация</h3>
+								<p>Данные обновляются мгновенно на всех твоих устройствах</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">📱</div>
+							<div>
+								<h3>Везде доступно</h3>
+								<p>Работает на телефоне, планшете и ПК, даже без интернета</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">🔐</div>
+							<div>
+								<h3>Защита данных</h3>
+								<p>Твои личные данные зашифрованы и доступны только тебе</p>
+							</div>
+						</div>
+						<div class="feature">
+							<div class="feature-icon">⚡</div>
+							<div>
+								<h3>Просто и быстро</h3>
+								<p>Интуитивный интерфейс без сложностей и лишних настроек</p>
+							</div>
+						</div>
 					</div>
-					
-					<!-- Индикаторы карусели -->
-					<div class="carousel-dots" id="carouselDots"></div>
-					
 					<button class="primary landing-btn" id="landingLoginBtn">Начать прямо сейчас →</button>
-				</div>
-				<div class="landing-visual">
-					<div class="landing-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));">
-						<div style="font-size: 32px; margin-bottom: 12px;">⚖️</div>
-						<div style="font-size: 20px; font-weight: 700; margin-bottom: 4px;">18.5%</div>
-						<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px;">Процент жира</div>
-						<div style="height: 1px; background: rgba(99, 102, 241, 0.2); margin-bottom: 16px;"></div>
-						<div style="font-size: 28px; margin-bottom: 12px;">💧</div>
-						<div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">1.8L</div>
-						<div style="font-size: 11px; color: var(--text-muted);">Норма воды</div>
-					</div>
 				</div>
 			</div>
 		</section>
