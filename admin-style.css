@@ -495,7 +495,161 @@ input[type="text"]:focus {
 	border-color: var(--accent);
 }
 
+/* Мобильная сетка пользователей */
+.users-grid {
+	display: none;
+	grid-template-columns: 1fr;
+	gap: 16px;
+}
+
+.user-card {
+	background: var(--bg-tertiary);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	transition: all 0.2s;
+}
+
+.user-card:active {
+	transform: scale(0.98);
+	border-color: var(--accent);
+}
+
+.user-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.user-card-title {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.user-card-username {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--text-primary);
+}
+
+.user-card-id {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.user-card-role {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 6px;
+	font-size: 11px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.user-card-role.admin {
+	background: var(--accent);
+	color: white;
+}
+
+.user-card-role.user {
+	background: var(--bg-primary);
+	color: var(--text-secondary);
+}
+
+.user-card-info {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	font-size: 13px;
+	color: var(--text-secondary);
+}
+
+.user-card-info-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 6px 0;
+	border-bottom: 1px solid var(--border);
+}
+
+.user-card-info-row:last-child {
+	border-bottom: none;
+}
+
+.user-card-info-label {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.user-card-info-value {
+	font-weight: 600;
+	color: var(--text-primary);
+}
+
+.user-card-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+.user-card-action-btn {
+	padding: 10px 12px;
+	border-radius: 8px;
+	border: none;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s;
+	white-space: nowrap;
+	font-family: 'Space Grotesk', sans-serif;
+}
+
+.user-card-action-btn.primary {
+	background: var(--accent);
+	color: white;
+	grid-column: 1 / -1;
+}
+
+.user-card-action-btn.primary:active {
+	background: var(--accent-hover);
+}
+
+.user-card-action-btn.secondary {
+	background: var(--bg-secondary);
+	color: var(--text-primary);
+	border: 1px solid var(--border);
+}
+
+.user-card-action-btn.secondary:active {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+.user-card-action-btn.warning {
+	background: var(--warning);
+	color: white;
+}
+
+.user-card-action-btn.warning:active {
+	opacity: 0.9;
+}
+
+.user-card-action-btn.danger {
+	background: var(--danger);
+	color: white;
+}
+
+.user-card-action-btn.danger:active {
+	opacity: 0.9;
+}
+
 /* Адаптивность */
+
 @media (max-width: 768px) {
 	.admin-header {
 		padding: 16px 20px;
@@ -530,6 +684,15 @@ input[type="text"]:focus {
 
 	.action-buttons {
 		flex-direction: column;
+	}
+	
+	/* На мобильных показываем карточки вместо таблицы */
+	#usersTableDesktop {
+		display: none;
+	}
+	
+	.users-grid {
+		display: grid;
 	}
 }
 

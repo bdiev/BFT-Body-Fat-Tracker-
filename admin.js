@@ -155,16 +155,20 @@ async function loadUserDetails(userId) {
 // ===== ОТОБРАЖЕНИЕ ТАБЛИЦЫ =====
 function renderUsersTable(users) {
 	const tbody = document.getElementById('usersTableBody');
+	const grid = document.getElementById('usersGridMobile');
 	
 	if (!users || users.length === 0) {
-		tbody.innerHTML = `
+		const emptyMsg = `
 			<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">
 				Пользователи не найдены
 			</td></tr>
 		`;
+		tbody.innerHTML = emptyMsg;
+		grid.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;">Пользователи не найдены</div>`;
 		return;
 	}
 
+	// Десктопная версия - таблица
 	tbody.innerHTML = users.map(user => `
 		<tr>
 			<td>${user.id}</td>
@@ -195,6 +199,52 @@ function renderUsersTable(users) {
 				</div>
 			</td>
 		</tr>
+	`).join('');
+	
+	// Мобильная версия - карточки
+	grid.innerHTML = users.map(user => `
+		<div class="user-card">
+			<div class="user-card-header">
+				<div class="user-card-title">
+					<div class="user-card-username">${escapeHtml(user.username)}</div>
+					<div class="user-card-id">ID: ${user.id}</div>
+				</div>
+				<span class="user-card-role ${user.is_admin ? 'admin' : 'user'}">
+					${user.is_admin ? 'Админ' : 'Пользователь'}
+				</span>
+			</div>
+			
+			<div class="user-card-info">
+				${user.email ? `<div class="user-card-info-row"><span class="user-card-info-label">Email:</span><span class="user-card-info-value">${escapeHtml(user.email)}</span></div>` : ''}
+				<div class="user-card-info-row">
+					<span class="user-card-info-label">Регистрация:</span>
+					<span class="user-card-info-value">${formatDate(user.created_at)}</span>
+				</div>
+				<div class="user-card-info-row">
+					<span class="user-card-info-label">Записей:</span>
+					<span class="user-card-info-value">${user.entries_count || 0}</span>
+				</div>
+				<div class="user-card-info-row">
+					<span class="user-card-info-label">Логов воды:</span>
+					<span class="user-card-info-value">${user.water_logs_count || 0}</span>
+				</div>
+			</div>
+			
+			<div class="user-card-actions">
+				<button class="user-card-action-btn secondary" onclick="loadUserDetails(${user.id})">
+					👁️ Детали
+				</button>
+				<button class="user-card-action-btn warning" onclick="toggleAdmin(${user.id})">
+					🔐 ${user.is_admin ? 'Снять' : 'Админ'}
+				</button>
+				<button class="user-card-action-btn secondary" onclick="showResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')">
+					🔑 Пароль
+				</button>
+				<button class="user-card-action-btn danger" onclick="deleteUser(${user.id}, '${escapeHtml(user.username)}')">
+					🗑️ Удалить
+				</button>
+			</div>
+		</div>
 	`).join('');
 }
 
