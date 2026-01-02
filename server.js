@@ -235,6 +235,13 @@ app.post('/api/signup', async (req, res) => {
           message: 'Аккаунт создан!',
           user: { id: this.lastID, username, isAdmin: false }
         });
+        
+        // Уведомляем админов о новой регистрации
+        notifyAdmins('userRegistered', {
+          id: this.lastID,
+          username,
+          email: email || null
+        });
       }
     );
   } catch (err) {
@@ -428,6 +435,9 @@ app.post('/api/history', authenticateToken, (req, res) => {
       
       // Отправляем уведомление всем подключённым клиентам этого пользователя
       notifyUserUpdate(req.userId, 'entryAdded', result);
+      
+      // Уведомляем админов
+      notifyAdmins('entryAdded', { userId: req.userId });
     }
   );
 });
@@ -598,6 +608,9 @@ app.post('/api/water-logs', authenticateToken, (req, res) => {
       };
       res.json(payload);
       notifyUserUpdate(req.userId, 'waterAdded', payload);
+      
+      // Уведомляем админов
+      notifyAdmins('waterAdded', { userId: req.userId });
     }
   );
 });
@@ -715,6 +728,12 @@ app.post('/api/admin/users/:id/toggle-admin', requireAdmin, (req, res) => {
     db.run('UPDATE users SET is_admin = ? WHERE id = ?', [newStatus, userId], (err) => {
       if (err) return res.status(500).json({ error: 'Ошибка обновления' });
       res.json({ message: 'Статус обновлен', is_admin: newStatus });
+      
+      // Уведомляем админов об изменении прав
+      notifyAdmins('adminToggled', {
+        userId,
+        is_admin: newStatus
+      });
     });
   });
 });
@@ -737,6 +756,9 @@ app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
       if (err) return res.status(500).json({ error: 'Ошибка удаления' });
       if (this.changes === 0) return res.status(404).json({ error: 'Пользователь не найден' });
       res.json({ message: 'Пользователь удален' });
+      
+      // Уведомляем админов об удалении
+      notifyAdmins('userDeleted', { userId });
     });
   });
 });
@@ -817,12 +839,15 @@ app.get('/api/admin/check', authenticateToken, (req, res) => {
 // ===== WebSocket для реал-тайма =====
 // Хранилище активных подключений: { userId: Set<WebSocket> }
 const wsConnections = new Map();
+// Хранилище админских подключений
+const adminConnections = new Set();
 
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
   let userId = null;
+  let isAdmin = false;
 
   // При подключении ждём сообщение с userId из JWT
   ws.on('message', (data) => {
@@ -831,11 +856,20 @@ wss.on('connection', (ws) => {
       if (msg.type === 'auth') {
         // Клиент отправляет userId при подключении
         userId = msg.userId;
+        isAdmin = msg.isAdmin || false;
+        
         if (!wsConnections.has(userId)) {
           wsConnections.set(userId, new Set());
         }
         wsConnections.get(userId).add(ws);
-        console.log(`WebSocket: пользователь ${userId} подключился. Всего подключений: ${wsConnections.get(userId).size}`);
+        
+        if (isAdmin) {
+          adminConnections.add(ws);
+          console.log(`WebSocket: админ ${userId} подключился. Всего админов: ${adminConnections.size}`);
+        } else {
+          console.log(`WebSocket: пользователь ${userId} подключился. Всего подключений: ${wsConnections.get(userId).size}`);
+        }
+        
         ws.send(JSON.stringify({ type: 'auth', status: 'ok' }));
       }
     } catch (e) {
@@ -850,6 +884,10 @@ wss.on('connection', (ws) => {
       if (wsConnections.get(userId).size === 0) {
         wsConnections.delete(userId);
       }
+    }
+    if (isAdmin) {
+      adminConnections.delete(ws);
+      console.log(`WebSocket: админ отключился. Осталось админов: ${adminConnections.size}`);
     }
   });
 
@@ -868,6 +906,27 @@ function notifyUserUpdate(userId, updateType, data) {
       }
     });
   }
+}
+
+// Функция для отправки уведомлений всем администраторам
+function notifyAdmins(updateType, data) {
+  if (adminConnections.size === 0) return;
+  
+  const message = JSON.stringify({ 
+    type: 'adminUpdate', 
+    updateType, 
+    data,
+    userId: data.userId || data.id,
+    timestamp: new Date().toISOString()
+  });
+  
+  console.log(`📢 Уведомляем ${adminConnections.size} админов: ${updateType}`);
+  
+  adminConnections.forEach(ws => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(message);
+    }
+  });
 }
 
 // API для получения данных о потреблении воды за разные периоды

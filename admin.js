@@ -1,3 +1,67 @@
+// ===== WebSocket для реал-тайма =====
+let ws = null;
+
+function connectAdminWebSocket(userId) {
+	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+	const wsUrl = `${protocol}//${window.location.host}`;
+	
+	console.log('Admin WebSocket: подключаемся к', wsUrl);
+	ws = new WebSocket(wsUrl);
+	
+	ws.onopen = () => {
+		console.log('Admin WebSocket: подключены');
+		ws.send(JSON.stringify({ type: 'auth', userId, isAdmin: true }));
+	};
+	
+	ws.onmessage = async (event) => {
+		try {
+			const msg = JSON.parse(event.data);
+			console.log('Admin WebSocket сообщение:', msg);
+			
+			if (msg.type === 'adminUpdate') {
+				// Обновления для админов
+				switch (msg.updateType) {
+					case 'userRegistered':
+						console.log('📢 Новый пользователь зарегистрирован:', msg.data);
+						await loadStats();
+						await loadUsers();
+						break;
+						
+					case 'userDeleted':
+						console.log('📢 Пользователь удален:', msg.data);
+						await loadStats();
+						await loadUsers();
+						break;
+						
+					case 'adminToggled':
+						console.log('📢 Права администратора изменены:', msg.data);
+						await loadStats();
+						await loadUsers();
+						break;
+						
+					case 'entryAdded':
+					case 'waterAdded':
+						console.log('📢 Данные обновлены у пользователя:', msg.userId);
+						await loadStats();
+						// Обновляем только статистику, не всех пользователей
+						break;
+				}
+			}
+		} catch (e) {
+			console.error('Admin WebSocket ошибка обработки сообщения:', e);
+		}
+	};
+	
+	ws.onerror = (err) => {
+		console.error('Admin WebSocket ошибка:', err);
+	};
+	
+	ws.onclose = () => {
+		console.log('Admin WebSocket: отключены. Переподключение через 3 сек...');
+		setTimeout(() => connectAdminWebSocket(userId), 3000);
+	};
+}
+
 // ===== API ФУНКЦИИ =====
 async function apiCall(endpoint, options = {}) {
 	try {
@@ -270,8 +334,22 @@ function escapeHtml(text) {
 
 function formatDate(dateString) {
 	if (!dateString) return 'н/д';
-	const date = new Date(dateString);
+	
+	// Нормализация временной метки: если сервер вернул строку без таймзоны ("YYYY-MM-DD HH:mm:ss"),
+	// добавляем 'Z', чтобы трактовать её как UTC и затем показать в локальном времени пользователя.
+	let date;
+	if (typeof dateString === 'string') {
+		const hasTZ = /[zZ]|[+-]\d\d:?\d\d/.test(dateString);
+		date = new Date(hasTZ ? dateString : `${dateString}Z`);
+	} else {
+		date = new Date(dateString);
+	}
+	
+	// Получаем локальный часовой пояс пользователя
+	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	
 	return date.toLocaleString('ru-RU', {
+		timeZone,
 		year: 'numeric',
 		month: '2-digit',
 		day: '2-digit',
@@ -287,9 +365,14 @@ async function init() {
 	if (!hasAccess) return;
 
 	// Загружаем информацию о текущем пользователе
+	let currentUserId = null;
 	try {
 		const me = await apiCall('/api/me');
 		document.getElementById('currentAdminName').textContent = me.username;
+		currentUserId = me.id;
+		
+		// Подключаемся к WebSocket для реал-тайм обновлений
+		connectAdminWebSocket(currentUserId);
 	} catch (err) {
 		console.error('Ошибка получения текущего пользователя:', err);
 	}
