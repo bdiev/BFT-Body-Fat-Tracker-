@@ -173,6 +173,7 @@ function renderUsersTable(users) {
 		<tr>
 			<td>${user.id}</td>
 			<td><strong>${escapeHtml(user.username)}</strong></td>
+			<td>${user.gender === 'female' ? '♀️ Девушка' : '♂️ Парень'}</td>
 			<td>${user.email || '<span style="color: var(--text-muted);">нет</span>'}</td>
 			<td>${formatDate(user.created_at)}</td>
 			<td>${user.entries_count || 0}</td>
@@ -215,6 +216,10 @@ function renderUsersTable(users) {
 			</div>
 			
 			<div class="user-card-info">
+				<div class="user-card-info-row">
+					<span class="user-card-info-label">Пол:</span>
+					<span class="user-card-info-value">${user.gender === 'female' ? '♀️ Девушка' : '♂️ Парень'}</span>
+				</div>
 				${user.email ? `<div class="user-card-info-row"><span class="user-card-info-label">Email:</span><span class="user-card-info-value">${escapeHtml(user.email)}</span></div>` : ''}
 				<div class="user-card-info-row">
 					<span class="user-card-info-label">Регистрация:</span>
@@ -317,6 +322,10 @@ function showUserDetailsModal(user) {
 		<div class="detail-row">
 			<span class="detail-label">Логин:</span>
 			<span class="detail-value">${escapeHtml(user.username)}</span>
+		</div>
+		<div class="detail-row">
+			<span class="detail-label">Пол:</span>
+			<span class="detail-value">${user.gender === 'female' ? '♀️ Девушка' : '♂️ Парень'}</span>
 		</div>
 		<div class="detail-row">
 			<span class="detail-label">Email:</span>
