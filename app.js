@@ -1889,7 +1889,7 @@ async function handleGenderChange() {
 		sexState.current = gender;
 		hipWrap.style.display = gender === 'female' ? 'block' : 'none';
 
-		statusEl.textContent = '✓ Пол успешно обновлён!';
+		statusEl.textContent = '✓ Пол обновлён';
 		statusEl.style.color = '#86efac';
 
 		// Перезагружаем настройки воды (т.к. норма зависит от пола)
@@ -1897,7 +1897,7 @@ async function handleGenderChange() {
 		
 		setTimeout(() => {
 			statusEl.textContent = '';
-		}, 3000);
+		}, 2000);
 	} catch (err) {
 		console.error('⚧️ Ошибка смены пола:', err);
 		statusEl.textContent = '❌ ' + err.message;
@@ -1935,11 +1935,44 @@ async function saveWaterSettings() {
 		
 		await loadWaterSettings();
 		await loadWaterLogs();
-		closeWaterSettingsModal();
 		showWaterNotification('✅ Настройки сохранены');
 	} catch (err) {
 		console.error('✗ Ошибка сохранения:', err);
-		alert('Ошибка при сохранении');
+		showWaterNotification('❌ Ошибка при сохранении');
+	}
+}
+
+async function autoSaveWaterSettings() {
+	const weight = parseFloat(document.getElementById('waterWeight').value);
+	const activity = document.getElementById('waterActivity').value;
+	const resetTime = document.getElementById('waterResetTime').value;
+	let dailyGoal = parseInt(document.getElementById('waterGoal').value);
+	
+	if (!weight || weight <= 0) {
+		return;
+	}
+	
+	// Если дневная норма не указана, рассчитываем
+	if (!dailyGoal || dailyGoal <= 0) {
+		dailyGoal = calculateDailyWaterGoal(weight, activity);
+	}
+	
+	try {
+		await apiCall('/api/water-settings', {
+			method: 'POST',
+			body: JSON.stringify({
+				weight,
+				activity,
+				daily_goal: dailyGoal,
+				reset_time: resetTime,
+				quick_buttons: waterSettings.quick_buttons
+			})
+		});
+		
+		await loadWaterSettings();
+		await loadWaterLogs();
+	} catch (err) {
+		console.error('✗ Ошибка автосохранения:', err);
 	}
 }
 
@@ -2371,7 +2404,7 @@ backToLoginBtn?.addEventListener('click', toggleSignupForm);
 document.getElementById('toggleChangePassword')?.addEventListener('click', toggleChangePasswordForm);
 document.getElementById('saveNewPassword')?.addEventListener('click', handleChangePassword);
 document.getElementById('cancelChangePassword')?.addEventListener('click', toggleChangePasswordForm);
-document.getElementById('saveGenderBtn')?.addEventListener('click', handleGenderChange);
+document.getElementById('accountGender')?.addEventListener('change', handleGenderChange);
 document.getElementById('deleteAccountBtn')?.addEventListener('click', handleDeleteAccount);
 document.getElementById('adminPanelBtn')?.addEventListener('click', () => {
 	window.location.href = '/admin.html';
@@ -2405,6 +2438,10 @@ cardLayoutToggle?.addEventListener('change', (e) => {
 document.getElementById('waterSettingsBtn')?.addEventListener('click', openWaterSettingsModal);
 document.getElementById('closeWaterSettingsModal')?.addEventListener('click', closeWaterSettingsModal);
 document.getElementById('closeWaterSettingsBtn')?.addEventListener('click', closeWaterSettingsModal);
+document.getElementById('waterWeight')?.addEventListener('change', autoSaveWaterSettings);
+document.getElementById('waterActivity')?.addEventListener('change', autoSaveWaterSettings);
+document.getElementById('waterResetTime')?.addEventListener('change', autoSaveWaterSettings);
+document.getElementById('waterGoal')?.addEventListener('change', autoSaveWaterSettings);
 document.getElementById('saveWaterSettingsBtn')?.addEventListener('click', saveWaterSettings);
 document.getElementById('recalculateWaterBtn')?.addEventListener('click', () => {
 	const weight = parseFloat(document.getElementById('waterWeight').value);
