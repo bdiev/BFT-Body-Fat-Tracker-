@@ -88,7 +88,7 @@ body {
 	background: var(--bg-tertiary);
 	color: var(--text-primary);
 	border: 1px solid var(--border);
-	padding: 10px 20px;
+	padding: 10px 16px;
 	border-radius: 8px;
 	text-decoration: none;
 	font-weight: 500;
@@ -96,8 +96,12 @@ body {
 	white-space: nowrap;
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: 6px;
 	font-size: 14px;
+	min-width: 120px;
+	height: 40px;
+	box-sizing: border-box;
 }
 
 .btn-back:hover {
@@ -109,7 +113,7 @@ body {
 	background: var(--danger);
 	color: white;
 	border: 1px solid var(--danger);
-	padding: 10px 20px;
+	padding: 10px 16px;
 	border-radius: 8px;
 	font-weight: 500;
 	cursor: pointer;
@@ -117,8 +121,12 @@ body {
 	white-space: nowrap;
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: 6px;
 	font-size: 14px;
+	min-width: 120px;
+	height: 40px;
+	box-sizing: border-box;
 }
 
 .btn-logout:hover {
@@ -236,6 +244,39 @@ body {
 	letter-spacing: 0.5px;
 	border-bottom: 2px solid var(--border);
 	white-space: nowrap;
+	user-select: none;
+}
+
+.users-table th.sortable {
+	cursor: pointer;
+	position: relative;
+	padding-right: 24px;
+	transition: all 0.2s;
+}
+
+.users-table th.sortable:hover {
+	background: var(--bg-primary);
+	color: var(--accent);
+}
+
+.users-table th.sortable::after {
+	content: '⇅';
+	position: absolute;
+	right: 8px;
+	opacity: 0.3;
+	font-size: 14px;
+}
+
+.users-table th.sortable.sort-asc::after {
+	content: '↑';
+	opacity: 1;
+	color: var(--accent);
+}
+
+.users-table th.sortable.sort-desc::after {
+	content: '↓';
+	opacity: 1;
+	color: var(--accent);
 }
 
 .users-table td {

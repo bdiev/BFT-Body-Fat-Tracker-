@@ -106,6 +106,7 @@ async function checkAdminAccess() {
 // ===== ЗАГРУЗКА ДАННЫХ =====
 let allUsers = [];
 let currentResetUserId = null;
+let currentSort = { field: null, direction: 'asc' };
 
 async function loadStats() {
 	try {
@@ -251,6 +252,55 @@ function renderUsersTable(users) {
 			</div>
 		</div>
 	`).join('');
+}
+
+// ===== СОРТИРОВКА =====
+function sortUsers(field) {
+	// Определяем направление сортировки
+	if (currentSort.field === field) {
+		currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+	} else {
+		currentSort.field = field;
+		currentSort.direction = 'asc';
+	}
+	
+	// Сортируем массив пользователей
+	const sorted = [...allUsers].sort((a, b) => {
+		let aVal = a[field];
+		let bVal = b[field];
+		
+		// Специальная обработка для разных типов данных
+		if (field === 'created_at') {
+			aVal = new Date(aVal).getTime();
+			bVal = new Date(bVal).getTime();
+		} else if (field === 'gender') {
+			aVal = aVal === 'female' ? 0 : 1;
+			bVal = bVal === 'female' ? 0 : 1;
+		} else if (field === 'is_admin') {
+			aVal = aVal ? 1 : 0;
+			bVal = bVal ? 1 : 0;
+		} else if (field === 'entries_count' || field === 'water_logs_count') {
+			aVal = aVal || 0;
+			bVal = bVal || 0;
+		}
+		
+		if (currentSort.direction === 'asc') {
+			return aVal > bVal ? 1 : -1;
+		} else {
+			return aVal < bVal ? 1 : -1;
+		}
+	});
+	
+	// Обновляем визуальные индикаторы
+	document.querySelectorAll('.users-table th.sortable').forEach(th => {
+		th.classList.remove('sort-asc', 'sort-desc');
+		if (th.dataset.sort === field) {
+			th.classList.add(`sort-${currentSort.direction}`);
+		}
+	});
+	
+	// Перерисовываем таблицу
+	renderUsersTable(sorted);
 }
 
 // ===== ДЕЙСТВИЯ С ПОЛЬЗОВАТЕЛЯМИ =====
@@ -481,6 +531,13 @@ async function init() {
 		if (e.target.id === 'resetPasswordModal') {
 			e.target.style.display = 'none';
 		}
+	});
+	
+	// Обработчики сортировки
+	document.querySelectorAll('.users-table th.sortable').forEach(th => {
+		th.addEventListener('click', () => {
+			sortUsers(th.dataset.sort);
+		});
 	});
 }
 
