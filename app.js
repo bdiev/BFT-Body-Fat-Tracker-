@@ -921,17 +921,11 @@ function updateUserBadge() {
 		openAuthModal.style.display = 'none';
 		
 		// Обновляем имя в модале аккаунта
-		if (accountDisplayName) {
-			accountDisplayName.textContent = currentUser;
-		}
-		
-		// Устанавливаем текущий пол в селекторе
-		const accountGenderSelect = document.getElementById('accountGender');
-		if (accountGenderSelect) {
-			accountGenderSelect.value = sexState.current || 'male';
-		}
-		
-		// Показываем админ-панель если пользователь админ
+			if (accountGenderSelect) {
+				accountGenderSelect.value = sexState.current || 'male';
+			}
+			
+			// Показываем админ-панель если пользователь админ
 			if (adminPanelBtn && currentUserData?.is_admin) {
 				adminPanelBtn.style.display = '';
 			} else if (adminPanelBtn) {
@@ -958,7 +952,7 @@ function updateUserBadge() {
 	} catch (err) {
 		console.error('❌ Ошибка в updateUserBadge:', err);
 	}
-
+}
 
 function calcBodyFat(sex, height, neck, waist, hip) {
 	if (sex === 'male') {
@@ -2779,20 +2773,24 @@ document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
 	} catch (err) {
 		console.error('❌ КРИТИЧЕСКАЯ ОШИБКА при инициализации:', err);
 		console.error(err.stack);
-	} finally {
-		// Гарантируем показ интерфейса даже при ошибке и анимированный вход
-	window.requestAnimationFrame(() => {
-		document.body.classList.add('page-ready');
-		if (!authenticated) {
-			const landing = document.getElementById('landingPage');
-			const appContent = document.getElementById('appContent');
-			const mainHeader = document.getElementById('mainHeader');
-			landing && (landing.style.display = 'block');
-			appContent && (appContent.style.display = 'none');
-			mainHeader && (mainHeader.style.display = 'none');
+		} finally {
+			// Гарантируем показ интерфейса даже при ошибке и анимированный вход
+			window.requestAnimationFrame(() => {
+				document.body.classList.add('page-ready');
+				if (!authenticated) {
+					const landing = document.getElementById('landingPage');
+					const appContent = document.getElementById('appContent');
+					const mainHeader = document.getElementById('mainHeader');
+					landing && (landing.style.display = 'block');
+					appContent && (appContent.style.display = 'none');
+					mainHeader && (mainHeader.style.display = 'none');
+				}
+			});
 		}
-	});
-}
+})();
+
+// ===== ОБРАБОТЧИКИ МОДАЛЬНЫХ ОКОН =====
+// Модаль аккаунта
 userAccountBtn?.addEventListener('click', () => {
 	accountModal.classList.add('active');
 	document.body.style.overflow = 'hidden';
@@ -2881,12 +2879,11 @@ settingsModal?.addEventListener('click', (e) => {
 	}
 });
 
-// Резерв: если DOM уже готов, добавим класс для анимации входа
-document.addEventListener('DOMContentLoaded', () => {
-	if (!document.body.classList.contains('page-ready')) {
-		window.requestAnimationFrame(() => {
-			document.body.classList.add('page-ready');
-		});
-	}
-});
-}
+	// Резерв: если DOM уже готов, добавим класс для анимации входа
+	document.addEventListener('DOMContentLoaded', () => {
+		if (!document.body.classList.contains('page-ready')) {
+			window.requestAnimationFrame(() => {
+				document.body.classList.add('page-ready');
+			});
+		}
+	});
