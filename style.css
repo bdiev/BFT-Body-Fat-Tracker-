@@ -1490,3 +1490,24 @@ input[type="checkbox"]:checked::after {
 		justify-content: center;
 	}
 }
+
+/* Стилизация placeholder текста */
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+	color: rgba(165, 180, 252, 0.4) !important;
+	opacity: 1;
+}
+
+input::-webkit-input-placeholder {
+	color: rgba(165, 180, 252, 0.4) !important;
+}
+
+input::-moz-placeholder {
+	color: rgba(165, 180, 252, 0.4) !important;
+	opacity: 1;
+}
+
+input:-ms-input-placeholder {
+	color: rgba(165, 180, 252, 0.4) !important;
+}
