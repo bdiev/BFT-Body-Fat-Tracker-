@@ -810,7 +810,6 @@ function closeModal() {
 
 openAuthModal?.addEventListener('click', openModal);
 closeAuthModal?.addEventListener('click', closeModal);
-currentUserPill?.addEventListener('click', openModal);
 installPromptTrigger?.addEventListener('click', showInstallPrompt);
 
 // Отслеживаем, был ли mousedown на самом overlay (не на содержимом)
