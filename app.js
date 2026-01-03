@@ -66,6 +66,11 @@ let userSettings = {
 	card_order: defaultCardOrder()
 };
 
+// Синхронизация настроек между устройствами
+let lastSyncTime = 0;
+let lastCardVisibility = defaultCardVisibility();
+let lastCardOrder = defaultCardOrder();
+
 // Очередь для оффлайн-запросов
 let offlineQueue = [];
 
@@ -512,6 +517,9 @@ async function loadUserSettings() {
 		console.log('✓ После нормализации:', loadedVis);
 		userSettings.card_visibility = loadedVis;
 		userSettings.card_order = normalizeCardOrder(settings.card_order);
+		// Сохраняем для сравнения при синхронизации
+		lastCardVisibility = { ...loadedVis };
+		lastCardOrder = [...userSettings.card_order ];
 		setCardVisibilityStatus('Настройки карточек загружены');
 		saveCache(CACHE_KEYS.userSettings, userSettings);
 	} catch (err) {
@@ -522,10 +530,14 @@ async function loadUserSettings() {
 				card_visibility: normalizeCardVisibility(cached.card_visibility),
 				card_order: normalizeCardOrder(cached.card_order)
 			};
+			lastCardVisibility = { ...userSettings.card_visibility };
+			lastCardOrder = [...userSettings.card_order ];
 			setCardVisibilityStatus('Оффлайн: применены сохранённые настройки');
 		} else {
 			userSettings.card_visibility = defaultCardVisibility();
 			userSettings.card_order = defaultCardOrder();
+			lastCardVisibility = { ...userSettings.card_visibility };
+			lastCardOrder = [...userSettings.card_order ];
 			setCardVisibilityStatus('Не удалось загрузить настройки, показаны все карточки', 'error');
 		}
 	}
@@ -534,6 +546,51 @@ async function loadUserSettings() {
 	applyCardOrder();
 }
 
+// Синхронизация настроек между устройствами в реальном времени
+async function syncCardSettingsFromServer() {
+	if (!authenticated || !navigator.onLine) return;
+	
+	try {
+		const now = Date.now();
+		// Проверяем не чаще чем раз в 3 секунды
+		if (now - lastSyncTime < 3000) return;
+		lastSyncTime = now;
+		
+		const settings = await apiCall('/api/user-settings');
+		if (!settings) return;
+		
+		// Проверяем изменилась ли видимость карточек
+		const visibilityChanged = JSON.stringify(settings.card_visibility) !== JSON.stringify(lastCardVisibility);
+		const orderChanged = JSON.stringify(settings.card_order) !== JSON.stringify(lastCardOrder);
+		
+		if (visibilityChanged || orderChanged) {
+			console.log('🔄 Обновление настроек с сервера (с другого устройства)');
+			lastCardVisibility = { ...settings.card_visibility };
+			lastCardOrder = [...settings.card_order ];
+			
+			userSettings.card_visibility = settings.card_visibility || defaultCardVisibility();
+			userSettings.card_order = settings.card_order || defaultCardOrder();
+			
+			applyCardVisibility();
+			syncCardVisibilityUI();
+			applyCardOrder();
+			
+			// Показываем краткое уведомление
+			const el = document.getElementById('cardVisibilityStatus');
+			if (el) {
+				el.textContent = 'Обновлено на другом устройстве';
+				el.style.color = '#74c0fc';
+				setTimeout(() => {
+					el.textContent = '';
+				}, 2000);
+			}
+		}
+	} catch (err) {
+		console.error('Ошибка синхронизации настроек:', err.message);
+	}
+}
+
+
 async function saveUserSettings(partialVisibility = {}, newOrder = null) {
 	const mergedVisibility = normalizeCardVisibility({ ...userSettings.card_visibility, ...partialVisibility });
 	const mergedOrder = normalizeCardOrder(newOrder ?? userSettings.card_order);
@@ -541,6 +598,9 @@ async function saveUserSettings(partialVisibility = {}, newOrder = null) {
 	console.log('📤 ОТПРАВЛЯЮ на сервер:', JSON.stringify({ card_visibility: mergedVisibility, card_order: mergedOrder }));
 	userSettings.card_visibility = mergedVisibility;
 	userSettings.card_order = mergedOrder;
+	// Сохраняем для сравнения при синхронизации
+	lastCardVisibility = { ...mergedVisibility };
+	lastCardOrder = [...mergedOrder ];
 	applyCardVisibility();
 	syncCardVisibilityUI();
 	applyCardOrder();
@@ -2570,6 +2630,11 @@ document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
 		}
 		
 		console.log('✓ Инициализация завершена');
+		
+		// Периодическая синхронизация настроек карточек между устройствами
+		if (authenticated) {
+			setInterval(syncCardSettingsFromServer, 2000); // Проверяем каждые 2 секунды
+		}
 		
 		window.addEventListener('resize', () => {
 			resizeCanvas();
