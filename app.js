@@ -2781,22 +2781,18 @@ document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
 		console.error(err.stack);
 	} finally {
 		// Гарантируем показ интерфейса даже при ошибке и анимированный вход
-			window.requestAnimationFrame(() => {
-				document.body.classList.add('page-ready');
-				if (!authenticated) {
-					const landing = document.getElementById('landingPage');
-					const appContent = document.getElementById('appContent');
-					const mainHeader = document.getElementById('mainHeader');
-					landing && (landing.style.display = 'block');
-					appContent && (appContent.style.display = 'none');
-					mainHeader && (mainHeader.style.display = 'none');
-				}
-			});
+	window.requestAnimationFrame(() => {
+		document.body.classList.add('page-ready');
+		if (!authenticated) {
+			const landing = document.getElementById('landingPage');
+			const appContent = document.getElementById('appContent');
+			const mainHeader = document.getElementById('mainHeader');
+			landing && (landing.style.display = 'block');
+			appContent && (appContent.style.display = 'none');
+			mainHeader && (mainHeader.style.display = 'none');
 		}
-})();
-
-// ===== ОБРАБОТЧИКИ МОДАЛЬНЫХ ОКОН =====
-// Модаль аккаунта
+	});
+}
 userAccountBtn?.addEventListener('click', () => {
 	accountModal.classList.add('active');
 	document.body.style.overflow = 'hidden';
