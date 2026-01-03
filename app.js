@@ -2499,6 +2499,61 @@ signupBtn?.addEventListener('click', handleSignup);
 toggleSignupBtn?.addEventListener('click', toggleSignupForm);
 backToLoginBtn?.addEventListener('click', toggleSignupForm);
 
+// Real-time validation for signup username
+document.getElementById('signupUsername')?.addEventListener('input', (e) => {
+	const username = e.target.value.trim();
+	const status = document.getElementById('signupStatus');
+	
+	if (!username) {
+		status.textContent = '';
+		status.style.color = '#ef4444';
+		return;
+	}
+	
+	if (username.length < 3) {
+		status.textContent = '❌ Логин должен быть минимум 3 символа';
+		status.style.color = '#ef4444';
+		return;
+	}
+	
+	if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+		status.textContent = '❌ Логин может содержать только латиницу, цифры, подчеркивание и дефис';
+		status.style.color = '#ef4444';
+		return;
+	}
+	
+	// Clear error if validation passes
+	status.textContent = '';
+});
+
+// Real-time validation for signup password
+document.getElementById('signupPassword')?.addEventListener('input', (e) => {
+	const password = e.target.value;
+	const status = document.getElementById('signupStatus');
+	
+	if (!password) {
+		status.textContent = '';
+		status.style.color = '#ef4444';
+		return;
+	}
+	
+	if (password.length < 8) {
+		status.textContent = '❌ Пароль должен быть минимум 8 символов';
+		status.style.color = '#ef4444';
+		return;
+	}
+	
+	const digitCount = (password.match(/\d/g) || []).length;
+	if (digitCount < 2) {
+		status.textContent = '❌ Пароль должен содержать минимум 2 цифры';
+		status.style.color = '#ef4444';
+		return;
+	}
+	
+	// Clear error if validation passes
+	status.textContent = '';
+});
+
 document.getElementById('toggleChangePassword')?.addEventListener('click', toggleChangePasswordForm);
 document.getElementById('saveNewPassword')?.addEventListener('click', handleChangePassword);
 document.getElementById('cancelChangePassword')?.addEventListener('click', toggleChangePasswordForm);
