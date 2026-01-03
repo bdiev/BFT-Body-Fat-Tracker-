@@ -918,11 +918,7 @@ function updateUserBadge() {
 			
 			// Показываем кнопки аккаунта и настроек
 		userAccountBtn.textContent = '👤 ' + currentUser;
-			settingsBtn.style.display = 'inline-flex';
-			logoutBtn.style.display = 'inline-flex';
-			openAuthModal.style.display = 'none';
-			
-			// Обновляем имя в модале аккаунта
+		userAccountBtn.style.display = 'inline-flex';
 			if (accountDisplayName) {
 				accountDisplayName.textContent = currentUser;
 			}
@@ -1639,14 +1635,18 @@ async function addWaterLog(amount, drinkType = 'вода') {
 		await loadWaterLogs();
 		
 		// Вибрация при успешном добавлении
-		if (navigator.vibrate) {
-			navigator.vibrate(50); // Короткая вибрация 50мс
+		try {
+			if ('vibrate' in navigator) {
+			navigator.vibrate(100);
+			console.log('✓ Вибрация выполнена');
+		} else if ('webkitVibrate' in navigator) {
+			navigator.webkitVibrate(100);
+			console.log('✓ WebKit вибрация выполнена');
+		} else {
+			console.log('❌ Vibration API не поддерживается');
 		}
-		
-		// Показываем короткое уведомление
-		showWaterNotification(`✅ Добавлено ${amount}мл`);
-	} catch (err) {
-		console.error('✗ Ошибка добавления воды:', err);
+	} catch (e) {
+		console.log('❌ Ошибка вибрации:', e);
 		// Если оффлайн — добавляем локально и покажем, что уйдет в очередь
 		if (!navigator.onLine) {
 			const tempLog = {
@@ -1670,14 +1670,18 @@ async function deleteWaterLog(id) {
 		await loadWaterLogs();
 		
 		// Вибрация при удалении (две короткие)
-		if (navigator.vibrate) {
-			navigator.vibrate([30, 50, 30]); // Две короткие вибрации
+		try {
+			if ('vibrate' in navigator) {
+			navigator.vibrate([50, 100, 50]);
+			console.log('✓ Вибрация удаления выполнена');
+		} else if ('webkitVibrate' in navigator) {
+			navigator.webkitVibrate([50, 100, 50]);
+			console.log('✓ WebKit вибрация удаления выполнена');
+		} else {
+			console.log('❌ Vibration API не поддерживается');
 		}
-		
-		showWaterNotification('✅ Удалено');
-	} catch (err) {
-		console.error('✗ Ошибка удаления:', err);
-	}
+	} catch (e) {
+		console.log('❌ Ошибка вибрации:', e);
 }
 
 function showWaterNotification(message) {
