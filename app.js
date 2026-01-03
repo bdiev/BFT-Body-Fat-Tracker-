@@ -1637,16 +1637,22 @@ async function addWaterLog(amount, drinkType = 'вода') {
 		// Вибрация при успешном добавлении
 		try {
 			if ('vibrate' in navigator) {
-			navigator.vibrate(100);
-			console.log('✓ Вибрация выполнена');
-		} else if ('webkitVibrate' in navigator) {
-			navigator.webkitVibrate(100);
-			console.log('✓ WebKit вибрация выполнена');
-		} else {
-			console.log('❌ Vibration API не поддерживается');
+				navigator.vibrate(100);
+				console.log('✓ Вибрация выполнена');
+			} else if ('webkitVibrate' in navigator) {
+				navigator.webkitVibrate(100);
+				console.log('✓ WebKit вибрация выполнена');
+			} else {
+				console.log('❌ Vibration API не поддерживается');
+			}
+		} catch (e) {
+			console.log('❌ Ошибка вибрации:', e);
 		}
-	} catch (e) {
-		console.log('❌ Ошибка вибрации:', e);
+		
+		// Показываем короткое уведомление
+		showWaterNotification(`✅ Добавлено ${amount}мл`);
+	} catch (err) {
+		console.error('✗ Ошибка добавления воды:', err);
 		// Если оффлайн — добавляем локально и покажем, что уйдет в очередь
 		if (!navigator.onLine) {
 			const tempLog = {
@@ -1672,16 +1678,22 @@ async function deleteWaterLog(id) {
 		// Вибрация при удалении (две короткие)
 		try {
 			if ('vibrate' in navigator) {
-			navigator.vibrate([50, 100, 50]);
-			console.log('✓ Вибрация удаления выполнена');
-		} else if ('webkitVibrate' in navigator) {
-			navigator.webkitVibrate([50, 100, 50]);
-			console.log('✓ WebKit вибрация удаления выполнена');
-		} else {
-			console.log('❌ Vibration API не поддерживается');
+				navigator.vibrate([50, 100, 50]);
+				console.log('✓ Вибрация удаления выполнена');
+			} else if ('webkitVibrate' in navigator) {
+				navigator.webkitVibrate([50, 100, 50]);
+				console.log('✓ WebKit вибрация удаления выполнена');
+			} else {
+				console.log('❌ Vibration API не поддерживается');
+			}
+		} catch (e) {
+			console.log('❌ Ошибка вибрации:', e);
 		}
-	} catch (e) {
-		console.log('❌ Ошибка вибрации:', e);
+		
+		showWaterNotification('✅ Удалено');
+	} catch (err) {
+		console.error('✗ Ошибка удаления:', err);
+	}
 }
 
 function showWaterNotification(message) {
