@@ -2779,8 +2779,8 @@ document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
 	} catch (err) {
 		console.error('❌ КРИТИЧЕСКАЯ ОШИБКА при инициализации:', err);
 		console.error(err.stack);
-		} finally {
-			// Гарантируем показ интерфейса даже при ошибке и анимированный вход
+	} finally {
+		// Гарантируем показ интерфейса даже при ошибке и анимированный вход
 			window.requestAnimationFrame(() => {
 				document.body.classList.add('page-ready');
 				if (!authenticated) {
