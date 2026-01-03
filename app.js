@@ -927,10 +927,11 @@ function updateUserBadge() {
 		
 		// Устанавливаем текущий пол в селекторе
 		const accountGenderSelect = document.getElementById('accountGender');
-				accountGenderSelect.value = sexState.current || 'male';
-			}
-			
-			// Показываем админ-панель если пользователь админ
+		if (accountGenderSelect) {
+			accountGenderSelect.value = sexState.current || 'male';
+		}
+		
+		// Показываем админ-панель если пользователь админ
 			if (adminPanelBtn && currentUserData?.is_admin) {
 				adminPanelBtn.style.display = '';
 			} else if (adminPanelBtn) {
@@ -957,7 +958,7 @@ function updateUserBadge() {
 	} catch (err) {
 		console.error('❌ Ошибка в updateUserBadge:', err);
 	}
-}
+
 
 function calcBodyFat(sex, height, neck, waist, hip) {
 	if (sex === 'male') {
@@ -2884,11 +2885,11 @@ settingsModal?.addEventListener('click', (e) => {
 	}
 });
 
-	// Резерв: если DOM уже готов, добавим класс для анимации входа
-	document.addEventListener('DOMContentLoaded', () => {
-		if (!document.body.classList.contains('page-ready')) {
-			window.requestAnimationFrame(() => {
-				document.body.classList.add('page-ready');
-			});
-		}
-	});
+// Резерв: если DOM уже готов, добавим класс для анимации входа
+document.addEventListener('DOMContentLoaded', () => {
+	if (!document.body.classList.contains('page-ready')) {
+		window.requestAnimationFrame(() => {
+			document.body.classList.add('page-ready');
+		});
+	}
+});
