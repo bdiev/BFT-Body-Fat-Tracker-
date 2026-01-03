@@ -1781,17 +1781,20 @@ function renderQuickButtonsList() {
 		const amountInput = div.querySelector('input[type="number"]');
 		const deleteBtn = div.querySelector('button');
 		
-		deleteBtn.addEventListener('click', () => {
+		deleteBtn.addEventListener('click', async () => {
 			waterSettings.quick_buttons.splice(idx, 1);
 			renderQuickButtonsList();
+			await saveWaterSettings();
 		});
 		
-		nameInput.addEventListener('change', () => {
+		nameInput.addEventListener('change', async () => {
 			waterSettings.quick_buttons[idx].name = nameInput.value;
+			await saveWaterSettings();
 		});
 		
-		amountInput.addEventListener('change', () => {
+		amountInput.addEventListener('change', async () => {
 			waterSettings.quick_buttons[idx].amount = parseInt(amountInput.value);
+			await saveWaterSettings();
 		});
 		
 		container.appendChild(div);
@@ -1912,7 +1915,6 @@ async function saveWaterSettings() {
 	let dailyGoal = parseInt(document.getElementById('waterGoal').value);
 	
 	if (!weight || weight <= 0) {
-		alert('Укажи вес');
 		return;
 	}
 	
@@ -1935,10 +1937,8 @@ async function saveWaterSettings() {
 		
 		await loadWaterSettings();
 		await loadWaterLogs();
-		showWaterNotification('✅ Настройки сохранены');
 	} catch (err) {
 		console.error('✗ Ошибка сохранения:', err);
-		showWaterNotification('❌ Ошибка при сохранении');
 	}
 }
 
@@ -2442,7 +2442,6 @@ document.getElementById('waterWeight')?.addEventListener('change', autoSaveWater
 document.getElementById('waterActivity')?.addEventListener('change', autoSaveWaterSettings);
 document.getElementById('waterResetTime')?.addEventListener('change', autoSaveWaterSettings);
 document.getElementById('waterGoal')?.addEventListener('change', autoSaveWaterSettings);
-document.getElementById('saveWaterSettingsBtn')?.addEventListener('click', saveWaterSettings);
 document.getElementById('recalculateWaterBtn')?.addEventListener('click', () => {
 	const weight = parseFloat(document.getElementById('waterWeight').value);
 	const activity = document.getElementById('waterActivity').value;
@@ -2456,10 +2455,11 @@ document.getElementById('recalculateWaterBtn')?.addEventListener('click', () => 
 	document.getElementById('waterGoal').value = calculated;
 	showWaterNotification(`✅ Норма пересчитана: ${calculated}мл`);
 });
-document.getElementById('addQuickButtonBtn')?.addEventListener('click', () => {
+document.getElementById('addQuickButtonBtn')?.addEventListener('click', async () => {
 	if (!waterSettings.quick_buttons) waterSettings.quick_buttons = [];
 	waterSettings.quick_buttons.push({ name: '💧 Вода', amount: 500 });
 	renderQuickButtonsList();
+	await saveWaterSettings();
 });
 
 // Отслеживаем mousedown для модали настроек воды
