@@ -2688,9 +2688,36 @@ accountModal?.addEventListener('click', (e) => {
 accountLogoutBtn?.addEventListener('click', async () => {
 	if (!confirm('Точно выйти?')) return;
 	try {
+		// Закрываем модаль аккаунта
+		const accountModal = document.getElementById('accountModal');
+		if (accountModal) {
+			accountModal.classList.remove('active');
+		}
+		
+		// Выполняем logout на сервере
 		await apiCall('/api/logout', { method: 'POST' });
-		window.location.reload();
+		
+		// Очищаем состояние приложения
+		authenticated = false;
+		currentUser = null;
+		userId = null;
+		history = [];
+		waterLogs = [];
+		
+		// Очищаем сохраненные данные входа
+		localStorage.removeItem('rememberMe_username');
+		localStorage.removeItem('rememberMe_password');
+		
+		// Обновляем интерфейс
+		updateUserBadge();
+		renderHistory();
+		
+		// Перезагружаем страницу для полного обновления
+		setTimeout(() => {
+			window.location.reload();
+		}, 300);
 	} catch (err) {
+		console.error('Ошибка выхода:', err.message);
 		alert('Ошибка выхода: ' + err.message);
 	}
 });
