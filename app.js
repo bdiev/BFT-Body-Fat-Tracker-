@@ -1,6 +1,7 @@
 // ===== СОСТОЯНИЕ И ПЕРЕМЕННЫЕ =====
 const sexState = { current: 'male' };
 let currentUser = null;
+let currentUserData = null;
 let authenticated = false;
 let history = [];
 let userId = null;
@@ -749,6 +750,7 @@ async function loadUserData() {
 	try {
 		const user = await apiCall('/api/me');
 		currentUser = user.username;
+		currentUserData = user;
 		userId = user.id;
 		authenticated = true;
 		
@@ -803,6 +805,7 @@ async function loadUserData() {
 		}
 		authenticated = false;
 		currentUser = null;
+		currentUserData = null;
 		userId = null;
 		return false;
 	}
@@ -2993,12 +2996,7 @@ document.getElementById('addWeightBtn')?.addEventListener('click', async () => {
 		if (authenticated) {
 			await loadWaterSettings();
 			await loadWaterLogs();
-			
-			// Показываем секцию графика воды
-			const waterChartSection = document.getElementById('waterChartSection');
-			if (waterChartSection) {
-				waterChartSection.style.display = 'block';
-			}
+			await loadWeightLogs();
 			
 			// Загружаем данные для графика воды
 			await loadWaterChartData('day');
