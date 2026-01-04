@@ -115,6 +115,7 @@ async function loadStats() {
 		document.getElementById('adminCount').textContent = stats.adminCount || 0;
 		document.getElementById('totalEntries').textContent = stats.totalEntries || 0;
 		document.getElementById('totalWaterLogs').textContent = stats.totalWaterLogs || 0;
+		document.getElementById('totalWeightLogs').textContent = stats.totalWeightLogs || 0;
 
 		// Отображаем недавних пользователей
 		const recentList = document.getElementById('recentUsersList');

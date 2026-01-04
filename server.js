@@ -1001,6 +1001,7 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
     totalUsers: 'SELECT COUNT(*) as count FROM users',
     totalEntries: 'SELECT COUNT(*) as count FROM entries',
     totalWaterLogs: 'SELECT COUNT(*) as count FROM water_logs',
+    totalWeightLogs: 'SELECT COUNT(*) as count FROM weight_logs',
     adminCount: 'SELECT COUNT(*) as count FROM users WHERE is_admin = 1',
     recentUsers: `SELECT id, username, created_at FROM users ORDER BY created_at DESC LIMIT 5`,
   };
@@ -1019,14 +1020,19 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
         if (err) return res.status(500).json({ error: 'Ошибка БД' });
         stats.totalWaterLogs = row.count;
         
-        db.get(queries.adminCount, (err, row) => {
+        db.get(queries.totalWeightLogs, (err, row) => {
           if (err) return res.status(500).json({ error: 'Ошибка БД' });
-          stats.adminCount = row.count;
+          stats.totalWeightLogs = row.count;
           
-          db.all(queries.recentUsers, (err, rows) => {
+          db.get(queries.adminCount, (err, row) => {
             if (err) return res.status(500).json({ error: 'Ошибка БД' });
-            stats.recentUsers = rows || [];
-            res.json(stats);
+            stats.adminCount = row.count;
+            
+            db.all(queries.recentUsers, (err, rows) => {
+              if (err) return res.status(500).json({ error: 'Ошибка БД' });
+              stats.recentUsers = rows || [];
+              res.json(stats);
+            });
           });
         });
       });
