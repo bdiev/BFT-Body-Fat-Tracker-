@@ -360,7 +360,19 @@
 
 			<!-- История воды за день -->
 			<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 14px;">
-				<div style="font-size: 12px; color: #a5b4fc; margin-bottom: 12px; font-weight: 600;">📋 История за сегодня</div>
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+					<div>
+						<div style="font-size: 12px; color: #a5b4fc; font-weight: 600;">📋 История</div>
+						<div id="waterLogsDate" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Сегодня</div>
+					</div>
+					<div style="display: flex; gap: 6px;">
+						<button id="waterLogsPrevBtn" class="pill-btn" style="font-size: 12px; padding: 6px 10px; width: auto;">← Назад</button>
+						<button id="waterLogsNextBtn" class="pill-btn" style="font-size: 12px; padding: 6px 10px; width: auto;">Вперед →</button>
+					</div>
+				</div>
+				<div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(99, 102, 241, 0.2);">
+					<div style="font-size: 12px; color: #a5b4fc;">Итого: <span id="waterLogsTotal" style="font-weight: 600;">0 мл</span></div>
+				</div>
 				<div id="waterLogsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
 					<p class="muted" style="font-size: 12px;">Добавляй воду и напитки</p>
 				</div>

@@ -19,6 +19,7 @@ let waterLogs = [];
 let currentWaterPeriod = 'day';
 let currentWaterChartPeriod = 'day';
 let waterChartData = [];
+let currentWaterLogsDate = new Date(); // Текущий выбранный день для логов
 
 // Состояние трекера веса
 let weightLogs = [];
@@ -1625,19 +1626,59 @@ function renderWaterLogs() {
 	const container = document.getElementById('waterLogsList');
 	if (!container) return;
 	
-	if (waterLogs.length === 0) {
-		container.innerHTML = '<p class="muted" style="font-size: 12px;">Добавляй воду и напитки</p>';
+	// Определяем границы текущего выбранного дня
+	const selectedDate = new Date(currentWaterLogsDate);
+	selectedDate.setHours(0, 0, 0, 0);
+	
+	const nextDate = new Date(selectedDate);
+	nextDate.setDate(nextDate.getDate() + 1);
+	
+	const boundary = selectedDate.getTime();
+	const nextBoundary = nextDate.getTime();
+	
+	// Фильтруем логи по выбранному дню
+	const logsForDay = waterLogs.filter(log => {
+		const logTime = normalizeTimestamp(log.logged_at);
+		return logTime >= boundary && logTime < nextBoundary;
+	});
+	
+	// Сортируем от новых к старым
+	const sorted = logsForDay.sort((a, b) => 
+		normalizeTimestamp(b.logged_at) - normalizeTimestamp(a.logged_at)
+	);
+	
+	// Обновляем дату и итого
+	const dateDisplay = document.getElementById('waterLogsDate');
+	const totalDisplay = document.getElementById('waterLogsTotal');
+	
+	if (dateDisplay) {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		
+		if (selectedDate.getTime() === today.getTime()) {
+			dateDisplay.textContent = 'Сегодня';
+		} else if (selectedDate.getTime() === new Date(today).setDate(today.getDate() - 1)) {
+			dateDisplay.textContent = 'Вчера';
+		} else {
+			dateDisplay.textContent = selectedDate.toLocaleDateString('ru-RU', { 
+				weekday: 'short', 
+				month: 'short', 
+				day: 'numeric' 
+			});
+		}
+	}
+	
+	const totalAmount = sorted.reduce((sum, log) => sum + (log.amount || 0), 0);
+	if (totalDisplay) {
+		totalDisplay.textContent = `${totalAmount} мл`;
+	}
+	
+	if (sorted.length === 0) {
+		container.innerHTML = '<p class="muted" style="font-size: 12px;">Нет логов на этот день</p>';
 		return;
 	}
 	
 	container.innerHTML = '';
-
-	const boundary = getLastWaterResetBoundary(waterSettings.reset_time);
-
-	// Сортируем от новых к старым (учитываем нормализацию таймзоны) и фильтруем по границе дня
-	const sorted = [...waterLogs]
-		.sort((a, b) => normalizeTimestamp(b.logged_at) - normalizeTimestamp(a.logged_at))
-		.filter(log => normalizeTimestamp(log.logged_at) >= boundary);
 
 	sorted.forEach(log => {
 		const time = formatLocalDateTime(normalizeTimestamp(log.logged_at), { hour: '2-digit', minute: '2-digit' });
@@ -2840,6 +2881,28 @@ document.getElementById('waterWeight')?.addEventListener('change', autoSaveWater
 document.getElementById('waterActivity')?.addEventListener('change', autoSaveWaterSettings);
 document.getElementById('waterResetTime')?.addEventListener('change', autoSaveWaterSettings);
 document.getElementById('waterGoal')?.addEventListener('change', autoSaveWaterSettings);
+
+// Обработчики для навигации по дням логов воды
+document.getElementById('waterLogsPrevBtn')?.addEventListener('click', () => {
+	currentWaterLogsDate.setDate(currentWaterLogsDate.getDate() - 1);
+	renderWaterLogs();
+});
+
+document.getElementById('waterLogsNextBtn')?.addEventListener('click', () => {
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	
+	const selectedDate = new Date(currentWaterLogsDate);
+	selectedDate.setHours(0, 0, 0, 0);
+	selectedDate.setDate(selectedDate.getDate() + 1);
+	
+	// Не даём перейти дальше чем на сегодня
+	if (selectedDate.getTime() <= today.getTime()) {
+		currentWaterLogsDate = selectedDate;
+		renderWaterLogs();
+	}
+});
+
 document.getElementById('recalculateWaterBtn')?.addEventListener('click', () => {
 	const weight = parseDecimalNumber(document.getElementById('waterWeight').value);
 	const activity = document.getElementById('waterActivity').value;
