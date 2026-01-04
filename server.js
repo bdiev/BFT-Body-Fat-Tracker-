@@ -1149,6 +1149,82 @@ app.post('/api/admin/users/:id/reset-password', requireAdmin, async (req, res) =
   }
 });
 
+// ===== ОТЛАДОЧНЫЙ ЭНДПОИНТ =====
+app.get('/api/admin/debug-visits', requireAdmin, (req, res) => {
+  console.log('🔍 Запрос отладки посещений...');
+  
+  // Проверяем структуру таблицы
+  db.all("PRAGMA table_info(visits)", (err, columns) => {
+    if (err) {
+      return res.json({
+        error: 'Ошибка при проверке структуры таблицы: ' + err.message,
+        tableExists: false
+      });
+    }
+    
+    if (!columns || columns.length === 0) {
+      return res.json({
+        error: 'Таблица visits не существует',
+        tableExists: false
+      });
+    }
+    
+    console.log('✓ Таблица visits существует');
+    
+    // Получаем все записи
+    db.all('SELECT * FROM visits ORDER BY visited_at DESC LIMIT 10', (err, rows) => {
+      if (err) {
+        return res.json({
+          tableExists: true,
+          columns: columns,
+          error: 'Ошибка при выборке данных: ' + err.message,
+          records: []
+        });
+      }
+      
+      // Получаем статистику
+      db.get('SELECT COUNT(*) as total, SUM(CASE WHEN is_anonymous = 0 THEN 1 ELSE 0 END) as registered, SUM(CASE WHEN is_anonymous = 1 THEN 1 ELSE 0 END) as anonymous FROM visits', (err, stats) => {
+        const result = {
+          tableExists: true,
+          columns: columns,
+          totalRecords: stats ? stats.total : 0,
+          registeredCount: stats ? stats.registered : 0,
+          anonymousCount: stats ? stats.anonymous : 0,
+          lastRecords: rows || []
+        };
+        
+        console.log('📊 Отладка посещений:', result);
+        res.json(result);
+      });
+    });
+  });
+});
+
+// Ручное логирование посещения (для отладки)
+app.post('/api/admin/test-visit', requireAdmin, (req, res) => {
+  console.log('🧪 Тестовое логирование посещения...');
+  logVisit(req.userId, 0);
+  
+  // Проверяем результат
+  setTimeout(() => {
+    db.get('SELECT COUNT(*) as count FROM visits', (err, row) => {
+      if (err) {
+        res.json({
+          success: false,
+          error: err.message,
+          totalRecords: 0
+        });
+      } else {
+        res.json({
+          success: true,
+          message: 'Посещение залогировано',
+          totalRecords: row ? row.count : 0
+        });
+      }
+    });
+  }, 100);
+});
+
 // Получить активность пользователей (статистика для админов)
 app.get('/api/admin/stats', requireAdmin, (req, res) => {
   const queries = {
