@@ -286,6 +286,50 @@ db.serialize(() => {
   }, 1000);
 });
 
+// ===== ФУНКЦИЯ ЛОГИРОВАНИЯ ПОСЕЩЕНИЙ =====
+function logVisit(userId = null, isAnonymous = true) {
+  try {
+    const query = `INSERT INTO visits (user_id, is_anonymous) VALUES (?, ?)`;
+    db.run(query, [userId || null, isAnonymous ? 1 : 0], function(err) {
+      if (err) {
+        console.error('❌ Ошибка логирования посещения:', err.message);
+        // Пытаемся пересоздать таблицу если её нет
+        if (err.message.includes('no such table')) {
+          console.warn('⚠️ Таблица visits не существует! Создаём её...');
+          db.run(`
+            CREATE TABLE IF NOT EXISTS visits (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER,
+              is_anonymous INTEGER DEFAULT 1,
+              visited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              user_agent TEXT,
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+          `, (createErr) => {
+            if (createErr) {
+              console.error('Ошибка создания таблицы visits:', createErr);
+            } else {
+              console.log('✓ Таблица visits создана');
+              // Повторяем попытку логирования
+              db.run(query, [userId || null, isAnonymous ? 1 : 0], (retryErr) => {
+                if (retryErr) {
+                  console.error('❌ Ошибка логирования посещения после пересоздания:', retryErr);
+                } else {
+                  console.log(`✓ Посещение залогировано: user_id=${userId}, anonymous=${isAnonymous}`);
+                }
+              });
+            }
+          });
+        }
+      } else {
+        console.log(`✓ Посещение залогировано: user_id=${userId}, anonymous=${isAnonymous}`);
+      }
+    });
+  } catch (err) {
+    console.error('❌ Критическая ошибка в logVisit:', err.message);
+  }
+}
+
 // Middleware проверки токена
 function authenticateToken(req, res, next) {
   const token = req.cookies.token;
@@ -926,49 +970,8 @@ app.delete('/api/weight-logs/:id', authenticateToken, (req, res) => {
   });
 });
 
+
 // ===== ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ =====
-function logVisit(userId = null, isAnonymous = true) {
-  try {
-    const query = `INSERT INTO visits (user_id, is_anonymous) VALUES (?, ?)`;
-    db.run(query, [userId || null, isAnonymous ? 1 : 0], function(err) {
-      if (err) {
-        console.error('❌ Ошибка логирования посещения:', err.message);
-        // Пытаемся пересоздать таблицу если её нет
-        if (err.message.includes('no such table')) {
-          console.warn('⚠️ Таблица visits не существует! Создаём её...');
-          db.run(`
-            CREATE TABLE IF NOT EXISTS visits (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              user_id INTEGER,
-              is_anonymous INTEGER DEFAULT 1,
-              visited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              user_agent TEXT,
-              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            )
-          `, (createErr) => {
-            if (createErr) {
-              console.error('Ошибка создания таблицы visits:', createErr);
-            } else {
-              console.log('✓ Таблица visits создана');
-              // Повторяем попытку логирования
-              db.run(query, [userId || null, isAnonymous ? 1 : 0], (retryErr) => {
-                if (retryErr) {
-                  console.error('❌ Ошибка логирования посещения после пересоздания:', retryErr);
-                } else {
-                  console.log(`✓ Посещение залогировано: user_id=${userId}, anonymous=${isAnonymous}`);
-                }
-              });
-            }
-          });
-        }
-      } else {
-        console.log(`✓ Посещение залогировано: user_id=${userId}, anonymous=${isAnonymous}`);
-      }
-    });
-  } catch (err) {
-    console.error('❌ Критическая ошибка в logVisit:', err.message);
-  }
-}
 
 // Возвращаем фронт
 app.get('/', (req, res) => {
