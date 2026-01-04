@@ -641,20 +641,22 @@ async function syncCardSettingsFromServer() {
 		lastCardVisibility = { ...serverVisibility };
 		lastCardOrder = [...serverOrder];
 		
-		userSettings.card_visibility = serverVisibility;
-		userSettings.card_order = serverOrder;
-			applyCardOrder();
+		userSettings.card_visibility = normalizeCardVisibility(serverVisibility);
+		userSettings.card_order = normalizeCardOrder(serverOrder);
+		applyCardVisibility();
+		syncCardVisibilityUI();
+		applyCardOrder();
 			
-			// Показываем краткое уведомление
-			const el = document.getElementById('cardVisibilityStatus');
-			if (el) {
-				el.textContent = 'Обновлено на другом устройстве';
-				el.style.color = '#74c0fc';
-				setTimeout(() => {
-					el.textContent = '';
-				}, 2000);
-			}
+		// Показываем краткое уведомление
+		const el = document.getElementById('cardVisibilityStatus');
+		if (el) {
+			el.textContent = 'Обновлено на другом устройстве';
+			el.style.color = '#74c0fc';
+			setTimeout(() => {
+				el.textContent = '';
+			}, 2000);
 		}
+	}
 	} catch (err) {
 		console.error('Ошибка синхронизации настроек:', err.message);
 	}
