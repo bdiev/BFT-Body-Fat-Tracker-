@@ -1716,11 +1716,15 @@ function renderWaterLogs() {
 		const startTimestamp = startOfDay.getTime();
 		const endTimestamp = endOfDay.getTime();
 		
+		console.log(`  📍 Прошлый день: reset_time = ${waterSettings.reset_time}`);
+		console.log(`  📍 startOfDay = ${startOfDay.toISOString()} (${startTimestamp})`);
+		console.log(`  📍 endOfDay = ${endOfDay.toISOString()} (${endTimestamp})`);
+		
 		logsForDay = waterLogs.filter(log => {
 			const logTimestamp = new Date(log.logged_at).getTime();
 			const match = logTimestamp >= startTimestamp && logTimestamp < endTimestamp;
 			
-			console.log(`  🔍 ${log.drink_type} (${log.logged_at}): ${match ? '✅' : '❌'} [${startTimestamp}, ${endTimestamp})`);
+			console.log(`  🔍 ${log.drink_type} (${log.logged_at}): логTime=${logTimestamp} ${match ? '✅' : '❌'}`);
 			
 			return match;
 		});
