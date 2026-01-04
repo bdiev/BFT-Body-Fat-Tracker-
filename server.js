@@ -395,7 +395,8 @@ const DEFAULT_CARD_VISIBILITY = {
   waterTracker: true,
   waterChart: true,
   weightTracker: true,
-  lastResult: true
+  lastResult: true,
+  restTimer: true
 };
 
 function parseCardVisibility(raw) {
@@ -409,7 +410,8 @@ function parseCardVisibility(raw) {
       waterTracker: parsed.waterTracker !== false,
       waterChart: parsed.waterChart !== false,
       weightTracker: parsed.weightTracker !== false,
-      lastResult: parsed.lastResult !== false
+      lastResult: parsed.lastResult !== false,
+      restTimer: parsed.restTimer !== false
     };
   } catch (e) {
     console.warn('Не удалось распарсить card_visibility, использую дефолт:', e.message);
