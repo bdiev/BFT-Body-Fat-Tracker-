@@ -27,17 +27,22 @@ app.use((req, res, next) => {
   
   // Логируем посещение главной страницы асинхронно
   if (req.method === 'GET' && req.path === '/') {
+    console.log('🔔 GET / обнаружен - будет залогирован визит');
     setImmediate(() => {
       const token = req.cookies.token;
+      console.log('   Token существует:', !!token);
       if (token) {
         jwt.verify(token, JWT_SECRET, (err, user) => {
           if (!err && user) {
+            console.log('   Вызываем logVisit с user.id:', user.id);
             logVisit(user.id, 0);
           } else {
+            console.log('   JWT ошибка или нет user - вызываем logVisit(null, 1)');
             logVisit(null, 1);
           }
         });
       } else {
+        console.log('   Нет токена - вызываем logVisit(null, 1)');
         logVisit(null, 1);
       }
     });
@@ -289,10 +294,16 @@ db.serialize(() => {
 // ===== ФУНКЦИЯ ЛОГИРОВАНИЯ ПОСЕЩЕНИЙ =====
 function logVisit(userId = null, isAnonymous = true) {
   try {
+    console.log(`📝 logVisit вызвана: userId=${userId}, isAnonymous=${isAnonymous}`);
     const query = `INSERT INTO visits (user_id, is_anonymous) VALUES (?, ?)`;
-    db.run(query, [userId || null, isAnonymous ? 1 : 0], function(err) {
+    const params = [userId || null, isAnonymous ? 1 : 0];
+    console.log(`   SQL: ${query}`);
+    console.log(`   Параметры: [${params.join(', ')}]`);
+    
+    db.run(query, params, function(err) {
       if (err) {
         console.error('❌ Ошибка логирования посещения:', err.message);
+        console.error('   Полная ошибка:', err);
         // Пытаемся пересоздать таблицу если её нет
         if (err.message.includes('no such table')) {
           console.warn('⚠️ Таблица visits не существует! Создаём её...');
@@ -311,22 +322,23 @@ function logVisit(userId = null, isAnonymous = true) {
             } else {
               console.log('✓ Таблица visits создана');
               // Повторяем попытку логирования
-              db.run(query, [userId || null, isAnonymous ? 1 : 0], (retryErr) => {
+              db.run(query, params, (retryErr) => {
                 if (retryErr) {
                   console.error('❌ Ошибка логирования посещения после пересоздания:', retryErr);
                 } else {
-                  console.log(`✓ Посещение залогировано: user_id=${userId}, anonymous=${isAnonymous}`);
+                  console.log(`✓ Посещение залогировано (retry): user_id=${userId}, anonymous=${isAnonymous}`);
                 }
               });
             }
           });
         }
       } else {
-        console.log(`✓ Посещение залогировано: user_id=${userId}, anonymous=${isAnonymous}`);
+        console.log(`✅ УСПЕШНО! Посещение залогировано: user_id=${userId}, anonymous=${isAnonymous}`);
       }
     });
   } catch (err) {
     console.error('❌ Критическая ошибка в logVisit:', err.message);
+    console.error('   Stack:', err.stack);
   }
 }
 
