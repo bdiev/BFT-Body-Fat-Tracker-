@@ -33,6 +33,11 @@ let restTimerRemaining = 0;
 let restTimerInterval = null;
 let restTimerRunning = false;
 let restTimerSound = null;
+let customTimers = {
+	1: 180,
+	2: 240,
+	3: 300
+};
 
 const CACHE_KEYS = {
 	user: 'cache_user',
@@ -3435,20 +3440,175 @@ settingsModal?.addEventListener('click', (e) => {
 });
 
 // ===== ТАЙМЕР ОТДЫХА =====
+function playTimerBeep() {
+	try {
+		const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+		
+		// Создаем 3 бипа подряд
+		const beepTimes = [0, 0.15, 0.3];
+		
+		beepTimes.forEach(startTime => {
+			// Oscillator для тона
+			const oscillator = audioContext.createOscillator();
+			const gainNode = audioContext.createGain();
+			
+			oscillator.connect(gainNode);
+			gainNode.connect(audioContext.destination);
+			
+			// Настройки звука
+			oscillator.frequency.value = 800; // Частота в Гц (высокий тон)
+			oscillator.type = 'sine'; // Тип волны
+			
+			// Envelope для плавности
+			const now = audioContext.currentTime + startTime;
+			gainNode.gain.setValueAtTime(0, now);
+			gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01); // Быстрый вход
+			gainNode.gain.linearRampToValueAtTime(0, now + 0.1); // Затухание
+			
+			// Воспроизведение
+			oscillator.start(now);
+			oscillator.stop(now + 0.1);
+		});
+	} catch (e) {
+		console.warn('Web Audio API не поддерживается:', e);
+	}
+}
+
+function loadCustomTimers() {
+	try {
+		const saved = localStorage.getItem('customTimers');
+		if (saved) {
+			customTimers = JSON.parse(saved);
+		}
+	} catch (e) {
+		console.warn('Не удалось загрузить кастомные таймеры:', e);
+	}
+}
+
+function saveCustomTimers() {
+	try {
+		localStorage.setItem('customTimers', JSON.stringify(customTimers));
+	} catch (e) {
+		console.warn('Не удалось сохранить кастомные таймеры:', e);
+	}
+}
+
+function updateCustomButtonLabel(btn, seconds) {
+	const minutes = Math.floor(seconds / 60);
+	const secs = seconds % 60;
+	const label = secs > 0 ? `${minutes}:${String(secs).padStart(2, '0')}` : `${minutes}:00`;
+	btn.querySelector('.timer-label').textContent = label;
+	btn.dataset.seconds = seconds;
+}
+
 function initRestTimer() {
+	// Загружаем сохраненные кастомные таймеры
+	loadCustomTimers();
+
 	// Создаём звук для таймера (бип)
 	restTimerSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjWM0fHUgzEHGmy57OihUBAJCQ==');
 
 	const presetBtns = document.querySelectorAll('.timer-preset-btn');
+	const customBtns = document.querySelectorAll('.timer-custom-btn');
 	const startBtn = document.getElementById('startTimerBtn');
 	const stopBtn = document.getElementById('stopTimerBtn');
 	const timerDisplay = document.getElementById('timerDisplay');
 	const timerStatus = document.getElementById('timerStatus');
 
+	// Обновляем кастомные кнопки из сохраненных настроек
+	customBtns.forEach(btn => {
+		const customId = parseInt(btn.dataset.customId);
+		if (customTimers[customId]) {
+			updateCustomButtonLabel(btn, customTimers[customId]);
+		}
+	});
+
+	// Обработка долгого нажатия для настройки кастомных кнопок
+	let pressTimer;
+	customBtns.forEach(btn => {
+		btn.addEventListener('mousedown', (e) => {
+			pressTimer = setTimeout(() => {
+				// Долгое нажатие - настройка
+				const customId = parseInt(btn.dataset.customId);
+				const currentSeconds = customTimers[customId];
+				const minutes = Math.floor(currentSeconds / 60);
+				const seconds = currentSeconds % 60;
+				
+				const input = prompt(`Настрой время для кнопки ${customId}:\nВведи время в формате ММ:СС (например, 5:30)`, `${minutes}:${String(seconds).padStart(2, '0')}`);
+				
+				if (input) {
+					const parts = input.split(':');
+					if (parts.length === 2) {
+						const newMinutes = parseInt(parts[0]) || 0;
+						const newSeconds = parseInt(parts[1]) || 0;
+						const totalSeconds = newMinutes * 60 + newSeconds;
+						
+						if (totalSeconds > 0 && totalSeconds <= 3600) {
+							customTimers[customId] = totalSeconds;
+							updateCustomButtonLabel(btn, totalSeconds);
+							saveCustomTimers();
+							
+							// Вибрация подтверждения
+							if (navigator.vibrate) {
+								navigator.vibrate(100);
+							}
+						}
+					}
+				}
+			}, 800); // 800ms для долгого нажатия
+		});
+
+		btn.addEventListener('mouseup', () => {
+			clearTimeout(pressTimer);
+		});
+
+		btn.addEventListener('mouseleave', () => {
+			clearTimeout(pressTimer);
+		});
+
+		// Для touch устройств
+		btn.addEventListener('touchstart', (e) => {
+			pressTimer = setTimeout(() => {
+				const customId = parseInt(btn.dataset.customId);
+				const currentSeconds = customTimers[customId];
+				const minutes = Math.floor(currentSeconds / 60);
+				const seconds = currentSeconds % 60;
+				
+				const input = prompt(`Настрой время для кнопки ${customId}:\nВведи время в формате ММ:СС (например, 5:30)`, `${minutes}:${String(seconds).padStart(2, '0')}`);
+				
+				if (input) {
+					const parts = input.split(':');
+					if (parts.length === 2) {
+						const newMinutes = parseInt(parts[0]) || 0;
+						const newSeconds = parseInt(parts[1]) || 0;
+						const totalSeconds = newMinutes * 60 + newSeconds;
+						
+						if (totalSeconds > 0 && totalSeconds <= 3600) {
+							customTimers[customId] = totalSeconds;
+							updateCustomButtonLabel(btn, totalSeconds);
+							saveCustomTimers();
+							
+							if (navigator.vibrate) {
+								navigator.vibrate(100);
+							}
+						}
+					}
+				}
+			}, 800);
+		});
+
+		btn.addEventListener('touchend', () => {
+			clearTimeout(pressTimer);
+		});
+	});
+
 	// Выбор времени
 	presetBtns.forEach(btn => {
-		btn.addEventListener('click', () => {
+		btn.addEventListener('click', (e) => {
 			if (restTimerRunning) return;
+
+			// Проверяем, не было ли это долгое нажатие
+			if (e.defaultPrevented) return;
 
 			restTimerSeconds = parseInt(btn.dataset.seconds);
 			restTimerRemaining = restTimerSeconds;
@@ -3530,7 +3690,10 @@ function completeRestTimer() {
 		navigator.vibrate([200, 100, 200, 100, 200]);
 	}
 
-	// Звук
+	// Звук через Web Audio API (работает на всех устройствах)
+	playTimerBeep();
+
+	// Попытка воспроизвести Audio (запасной вариант)
 	if (restTimerSound) {
 		restTimerSound.play().catch(() => {});
 	}

@@ -353,9 +353,21 @@
 				<button class="timer-preset-btn" data-seconds="60" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">1:00</button>
 				<button class="timer-preset-btn" data-seconds="90" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">1:30</button>
 				<button class="timer-preset-btn" data-seconds="120" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">2:00</button>
-				<button class="timer-preset-btn" data-seconds="180" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">3:00</button>
-				<button class="timer-preset-btn" data-seconds="240" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">4:00</button>
+				<button class="timer-preset-btn timer-custom-btn" data-custom-id="1" data-seconds="180" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s; position: relative;">
+					<span class="timer-label">3:00</span>
+					<span style="position: absolute; top: 2px; right: 4px; font-size: 10px; opacity: 0.5;">⚙️</span>
+				</button>
+				<button class="timer-preset-btn timer-custom-btn" data-custom-id="2" data-seconds="240" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s; position: relative;">
+					<span class="timer-label">4:00</span>
+					<span style="position: absolute; top: 2px; right: 4px; font-size: 10px; opacity: 0.5;">⚙️</span>
+				</button>
+				<button class="timer-preset-btn timer-custom-btn" data-custom-id="3" data-seconds="300" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s; position: relative;">
+					<span class="timer-label">5:00</span>
+					<span style="position: absolute; top: 2px; right: 4px; font-size: 10px; opacity: 0.5;">⚙️</span>
+				</button>
 			</div>
+
+			<p class="muted" style="margin: 0 0 16px; font-size: 12px; text-align: center;">💡 Удержи кнопку с ⚙️ чтобы настроить свое время</p>
 
 			<!-- Кнопки управления -->
 			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
