@@ -880,10 +880,13 @@ app.delete('/api/weight-logs/:id', authenticateToken, (req, res) => {
 
 // ===== ЛОГИРОВАНИЕ ПОСЕЩЕНИЙ =====
 function logVisit(userId = null, isAnonymous = true) {
-  const userAgent = ''; // не сохраняем user-agent для упрощения
-  const query = `INSERT INTO visits (user_id, is_anonymous, user_agent) VALUES (?, ?, ?)`;
-  db.run(query, [userId || null, isAnonymous ? 1 : 0, userAgent], (err) => {
-    if (err) console.error('Ошибка логирования посещения:', err);
+  const query = `INSERT INTO visits (user_id, is_anonymous) VALUES (?, ?)`;
+  db.run(query, [userId || null, isAnonymous ? 1 : 0], (err) => {
+    if (err) {
+      console.error('❌ Ошибка логирования посещения:', err.message);
+    } else {
+      console.log(`✓ Посещение залогировано: user_id=${userId}, anonymous=${isAnonymous}`);
+    }
   });
 }
 
@@ -894,7 +897,7 @@ app.get('/', (req, res) => {
   if (token) {
     // Если пользователь авторизован, логируем как зарегистрированное посещение
     jwt.verify(token, JWT_SECRET, (err, user) => {
-      if (!err) {
+      if (!err && user) {
         logVisit(user.id, 0); // 0 = не анонимное
       } else {
         logVisit(null, 1); // 1 = анонимное
@@ -1105,22 +1108,16 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
               
               // Получаем статистику по посещениям
               db.get('SELECT COUNT(*) as count FROM visits WHERE is_anonymous = 0', (err, row) => {
-                if (err) {
-                  stats.registeredVisits = 0;
-                  stats.anonymousVisits = 0;
-                  stats.totalVisits = 0;
-                } else {
-                  stats.registeredVisits = row.count || 0;
+                stats.registeredVisits = (row && row.count) ? row.count : 0;
+                
+                db.get('SELECT COUNT(*) as count FROM visits WHERE is_anonymous = 1', (err, row) => {
+                  stats.anonymousVisits = (row && row.count) ? row.count : 0;
                   
-                  db.get('SELECT COUNT(*) as count FROM visits WHERE is_anonymous = 1', (err, row) => {
-                    stats.anonymousVisits = row ? row.count : 0;
-                    
-                    db.get('SELECT COUNT(*) as count FROM visits', (err, row) => {
-                      stats.totalVisits = row ? row.count : 0;
-                      res.json(stats);
-                    });
+                  db.get('SELECT COUNT(*) as count FROM visits', (err, row) => {
+                    stats.totalVisits = (row && row.count) ? row.count : 0;
+                    res.json(stats);
                   });
-                }
+                });
               });
             });
           });
