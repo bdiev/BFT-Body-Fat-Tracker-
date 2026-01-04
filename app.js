@@ -21,6 +21,7 @@ let currentWaterChartPeriod = 'day';
 let waterChartData = [];
 let currentWaterLogsDate = new Date(); // Текущий выбранный день для логов
 let waterChartPoints = []; // Координаты точек для hover
+let waterChartTooltipInitialized = false; // Флаг инициализации tooltip
 
 // Состояние трекера веса
 let weightLogs = [];
@@ -1979,6 +1980,15 @@ function renderWaterChart() {
 }
 
 function setupWaterChartTooltip(canvas) {
+	console.log('🎯 setupWaterChartTooltip: инициализируем tooltip, уже инициализирован:', waterChartTooltipInitialized);
+	console.log('  waterChartPoints.length:', waterChartPoints.length);
+	
+	// Если уже инициализировано, ничего не делаем
+	if (waterChartTooltipInitialized) {
+		console.log('✓ Tooltip уже инициализирован, пропускаем');
+		return;
+	}
+	
 	// Удаляем старый tooltip если есть
 	const oldTooltip = document.getElementById('waterChartTooltip');
 	if (oldTooltip) oldTooltip.remove();
@@ -1987,7 +1997,7 @@ function setupWaterChartTooltip(canvas) {
 	const tooltip = document.createElement('div');
 	tooltip.id = 'waterChartTooltip';
 	tooltip.style.cssText = `
-		position: absolute;
+		position: fixed;
 		background: rgba(31, 41, 55, 0.95);
 		border: 1px solid rgba(99, 102, 241, 0.3);
 		border-radius: 8px;
@@ -1996,11 +2006,13 @@ function setupWaterChartTooltip(canvas) {
 		color: #e2e8f0;
 		pointer-events: none;
 		display: none;
-		z-index: 1000;
+		z-index: 10000;
 		white-space: nowrap;
 		backdrop-filter: blur(10px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 	`;
 	document.body.appendChild(tooltip);
+	console.log('✓ Tooltip элемент создан');
 	
 	// Обработчик движения мыши
 	canvas.addEventListener('mousemove', (e) => {
@@ -2008,12 +2020,15 @@ function setupWaterChartTooltip(canvas) {
 		const x = e.clientX - rect.left;
 		const y = e.clientY - rect.top;
 		
+		console.log('🖱️ mousemove: x=' + Math.round(x) + ', y=' + Math.round(y) + ', points=' + waterChartPoints.length);
+		
 		// Проверяем, находимся ли мы над одной из точек
 		let hoveredPoint = null;
 		for (const point of waterChartPoints) {
 			const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
 			if (distance <= point.radius + 10) { // 10 - зона попадания
 				hoveredPoint = point;
+				console.log('  ✓ Найдена точка:', point.fullDate, 'расстояние:', Math.round(distance));
 				break;
 			}
 		}
@@ -2035,6 +2050,9 @@ function setupWaterChartTooltip(canvas) {
 		tooltip.style.display = 'none';
 		canvas.style.cursor = 'default';
 	});
+	
+	console.log('✓ Обработчики событий добавлены на canvas');
+	waterChartTooltipInitialized = true;
 }
 
 function openWaterSettingsModal() {

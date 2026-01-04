@@ -719,15 +719,14 @@ app.post('/api/water-settings', authenticateToken, (req, res) => {
 
 // Получить логи воды за сегодня
 app.get('/api/water-logs', authenticateToken, (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
   const query = `
     SELECT id, amount, drink_type, logged_at 
     FROM water_logs 
-    WHERE user_id = ? AND DATE(logged_at) = ?
+    WHERE user_id = ?
     ORDER BY logged_at DESC
   `;
   
-  db.all(query, [req.userId, today], (err, rows) => {
+  db.all(query, [req.userId], (err, rows) => {
     if (err) return res.status(500).json({ error: 'Ошибка БД' });
     res.json(rows || []);
   });
