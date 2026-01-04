@@ -116,6 +116,9 @@ async function loadStats() {
 		document.getElementById('totalEntries').textContent = stats.totalEntries || 0;
 		document.getElementById('totalWaterLogs').textContent = stats.totalWaterLogs || 0;
 		document.getElementById('totalWeightLogs').textContent = stats.totalWeightLogs || 0;
+		document.getElementById('totalVisits').textContent = stats.totalVisits || 0;
+		document.getElementById('registeredVisits').textContent = stats.registeredVisits || 0;
+		document.getElementById('anonymousVisits').textContent = stats.anonymousVisits || 0;
 
 		// Отображаем недавних пользователей
 		const recentList = document.getElementById('recentUsersList');
