@@ -20,6 +20,7 @@ let currentWaterPeriod = 'day';
 let currentWaterChartPeriod = 'day';
 let waterChartData = [];
 let currentWaterLogsDate = new Date(); // Текущий выбранный день для логов
+let waterChartPoints = []; // Координаты точек для hover
 
 // Состояние трекера веса
 let weightLogs = [];
@@ -281,7 +282,12 @@ function buildWaterSeries(period, logs, resetTime = '00:00') {
 	const series = [];
 	if (period === 'day') {
 		// Возвращаем как есть, но отсортировано
-		return filtered.sort((a, b) => a.ts - b.ts).map(l => ({ label: formatLocalDateTime(l.ts, { hour: '2-digit', minute: '2-digit' }), amount: l.amount, raw: l }));
+		return filtered.sort((a, b) => a.ts - b.ts).map(l => ({ 
+			label: formatLocalDateTime(l.ts, { hour: '2-digit', minute: '2-digit' }), 
+			amount: l.amount,
+			fullDate: formatLocalDateTime(l.ts, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+			raw: l 
+		}));
 	}
 
 	if (period === 'week') {
@@ -293,7 +299,12 @@ function buildWaterSeries(period, logs, resetTime = '00:00') {
 			const total = filtered
 				.filter(l => l.ts >= dayStart && l.ts < dayEnd)
 				.reduce((s, l) => s + l.amount, 0);
-			series.push({ label: formatLocalDateTime(dayStart, { weekday: 'short' }), amount: total, date: dayStart });
+			series.push({ 
+				label: formatLocalDateTime(dayStart, { weekday: 'short' }), 
+				amount: total, 
+				date: dayStart,
+				fullDate: formatLocalDateTime(dayStart, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+			});
 		}
 		return series;
 	}
@@ -307,7 +318,12 @@ function buildWaterSeries(period, logs, resetTime = '00:00') {
 			const total = filtered
 				.filter(l => l.ts >= dayStart && l.ts < dayEnd)
 				.reduce((s, l) => s + l.amount, 0);
-			series.push({ label: formatLocalDateTime(dayStart, { day: '2-digit', month: 'short' }), amount: total, date: dayStart });
+			series.push({ 
+				label: formatLocalDateTime(dayStart, { day: '2-digit', month: 'short' }), 
+				amount: total, 
+				date: dayStart,
+				fullDate: formatLocalDateTime(dayStart, { year: 'numeric', month: 'long', day: 'numeric' })
+			});
 			d.setDate(d.getDate() + 1);
 		}
 		return series;
@@ -320,7 +336,12 @@ function buildWaterSeries(period, logs, resetTime = '00:00') {
 		const total = filtered
 			.filter(l => l.ts >= monthStart && l.ts < monthEnd)
 			.reduce((s, l) => s + l.amount, 0);
-		series.push({ label: formatLocalDateTime(monthStart, { month: 'short' }), amount: total, date: monthStart });
+		series.push({ 
+			label: formatLocalDateTime(monthStart, { month: 'short' }), 
+			amount: total, 
+			date: monthStart,
+			fullDate: formatLocalDateTime(monthStart, { year: 'numeric', month: 'long' })
+		});
 	}
 	return series;
 }
@@ -1538,9 +1559,18 @@ async function loadWaterSettings() {
 
 async function loadWaterLogs() {
 	try {
+		console.log('📥 Загружаем логи воды с /api/water-logs...');
 		const logs = await apiCall('/api/water-logs');
-		waterLogs = logs;
-		console.log('✓ Загружены логи воды:', waterLogs);
+		console.log('📦 Получен ответ от API:', logs);
+		console.log('📊 Тип данных:', typeof logs, 'Является ли массивом:', Array.isArray(logs), 'Длина:', logs?.length);
+		
+		waterLogs = logs || [];
+		console.log('✓ Загружены логи воды:', waterLogs.length, 'записей');
+		
+		if (waterLogs.length > 0) {
+			console.log('  Примеры логов:', waterLogs.slice(0, 2));
+		}
+		
 		saveCache(CACHE_KEYS.waterLogs, waterLogs);
 		renderWaterProgress();
 		renderWaterLogs();
@@ -1625,6 +1655,10 @@ function renderWaterProgress() {
 function renderWaterLogs() {
 	const container = document.getElementById('waterLogsList');
 	if (!container) return;
+	
+	console.log('🔍 renderWaterLogs: начало рендеринга');
+	console.log('  waterLogs:', waterLogs);
+	console.log('  currentWaterLogsDate:', currentWaterLogsDate);
 	
 	// Определяем границы текущего выбранного дня (в миллисекундах по местному времени)
 	const selectedDate = new Date(currentWaterLogsDate);
@@ -1829,6 +1863,9 @@ function renderWaterChart() {
 	const height = canvas.height / dpr;
 	const padding = 52;
 
+	// Сброс точек
+	waterChartPoints = [];
+
 	// Фон
 	const bg = ctx.createLinearGradient(0, 0, 0, height);
 	bg.addColorStop(0, '#0f172a');
@@ -1901,6 +1938,16 @@ function renderWaterChart() {
 	series.forEach((point, index) => {
 		const x = scaleX(index);
 		const y = scaleY(point.amount);
+		
+		// Сохраняем координаты для hover
+		waterChartPoints.push({
+			x, y,
+			radius: 6.5,
+			date: point.label,
+			amount: point.amount,
+			fullDate: point.fullDate || point.label
+		});
+		
 		ctx.beginPath();
 		ctx.fillStyle = '#22c55e';
 		ctx.strokeStyle = '#ecfeff';
@@ -1926,6 +1973,68 @@ function renderWaterChart() {
 		const x = scaleX(i);
 		ctx.fillText(series[i].label, x - 22, height - padding + 18);
 	}
+	
+	// Добавляем обработчик hover для tooltip
+	setupWaterChartTooltip(canvas);
+}
+
+function setupWaterChartTooltip(canvas) {
+	// Удаляем старый tooltip если есть
+	const oldTooltip = document.getElementById('waterChartTooltip');
+	if (oldTooltip) oldTooltip.remove();
+	
+	// Создаем tooltip элемент
+	const tooltip = document.createElement('div');
+	tooltip.id = 'waterChartTooltip';
+	tooltip.style.cssText = `
+		position: absolute;
+		background: rgba(31, 41, 55, 0.95);
+		border: 1px solid rgba(99, 102, 241, 0.3);
+		border-radius: 8px;
+		padding: 8px 12px;
+		font-size: 12px;
+		color: #e2e8f0;
+		pointer-events: none;
+		display: none;
+		z-index: 1000;
+		white-space: nowrap;
+		backdrop-filter: blur(10px);
+	`;
+	document.body.appendChild(tooltip);
+	
+	// Обработчик движения мыши
+	canvas.addEventListener('mousemove', (e) => {
+		const rect = canvas.getBoundingClientRect();
+		const x = e.clientX - rect.left;
+		const y = e.clientY - rect.top;
+		
+		// Проверяем, находимся ли мы над одной из точек
+		let hoveredPoint = null;
+		for (const point of waterChartPoints) {
+			const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
+			if (distance <= point.radius + 10) { // 10 - зона попадания
+				hoveredPoint = point;
+				break;
+			}
+		}
+		
+		if (hoveredPoint) {
+			tooltip.textContent = `${hoveredPoint.fullDate}: ${hoveredPoint.amount} мл`;
+			tooltip.style.display = 'block';
+			tooltip.style.left = (e.clientX + 10) + 'px';
+			tooltip.style.top = (e.clientY - 30) + 'px';
+			canvas.style.cursor = 'pointer';
+		} else {
+			tooltip.style.display = 'none';
+			canvas.style.cursor = 'default';
+		}
+	});
+	
+	// Обработчик выхода из области canvas
+	canvas.addEventListener('mouseleave', () => {
+		tooltip.style.display = 'none';
+		canvas.style.cursor = 'default';
+	});
 }
 
 function openWaterSettingsModal() {
