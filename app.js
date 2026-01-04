@@ -1626,7 +1626,7 @@ function renderWaterLogs() {
 	const container = document.getElementById('waterLogsList');
 	if (!container) return;
 	
-	// Определяем границы текущего выбранного дня
+	// Определяем границы текущего выбранного дня (в миллисекундах по местному времени)
 	const selectedDate = new Date(currentWaterLogsDate);
 	selectedDate.setHours(0, 0, 0, 0);
 	
@@ -1636,15 +1636,30 @@ function renderWaterLogs() {
 	const boundary = selectedDate.getTime();
 	const nextBoundary = nextDate.getTime();
 	
-	// Фильтруем логи по выбранному дню
+	console.log('🔍 Фильтрация логов воды:');
+	console.log('  Выбранный день:', selectedDate.toLocaleDateString('ru-RU'));
+	console.log('  Граница от:', new Date(boundary).toISOString());
+	console.log('  Граница до:', new Date(nextBoundary).toISOString());
+	console.log('  Всего логов:', waterLogs.length);
+	
+	// Фильтруем логи по выбранному дню (используем местное время без нормализации)
 	const logsForDay = waterLogs.filter(log => {
-		const logTime = normalizeTimestamp(log.logged_at);
-		return logTime >= boundary && logTime < nextBoundary;
+		// Парсим дату логирования
+		const logDate = new Date(log.logged_at);
+		const logTime = logDate.getTime();
+		const match = logTime >= boundary && logTime < nextBoundary;
+		
+		if (!match) {
+			console.log(`  ❌ ${log.drink_type} (${log.logged_at}): ${logTime} не в диапазоне [${boundary}, ${nextBoundary})`);
+		}
+		return match;
 	});
+	
+	console.log('  Найдено логов на этот день:', logsForDay.length);
 	
 	// Сортируем от новых к старым
 	const sorted = logsForDay.sort((a, b) => 
-		normalizeTimestamp(b.logged_at) - normalizeTimestamp(a.logged_at)
+		new Date(b.logged_at).getTime() - new Date(a.logged_at).getTime()
 	);
 	
 	// Обновляем дату и итого
@@ -1657,14 +1672,19 @@ function renderWaterLogs() {
 		
 		if (selectedDate.getTime() === today.getTime()) {
 			dateDisplay.textContent = 'Сегодня';
-		} else if (selectedDate.getTime() === new Date(today).setDate(today.getDate() - 1)) {
-			dateDisplay.textContent = 'Вчера';
 		} else {
-			dateDisplay.textContent = selectedDate.toLocaleDateString('ru-RU', { 
-				weekday: 'short', 
-				month: 'short', 
-				day: 'numeric' 
-			});
+			const yesterday = new Date(today);
+			yesterday.setDate(yesterday.getDate() - 1);
+			
+			if (selectedDate.getTime() === yesterday.getTime()) {
+				dateDisplay.textContent = 'Вчера';
+			} else {
+				dateDisplay.textContent = selectedDate.toLocaleDateString('ru-RU', { 
+					weekday: 'short', 
+					month: 'short', 
+					day: 'numeric' 
+				});
+			}
 		}
 	}
 	
@@ -1681,7 +1701,8 @@ function renderWaterLogs() {
 	container.innerHTML = '';
 
 	sorted.forEach(log => {
-		const time = formatLocalDateTime(normalizeTimestamp(log.logged_at), { hour: '2-digit', minute: '2-digit' });
+		const logDate = new Date(log.logged_at);
+		const time = logDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 		const logEl = document.createElement('div');
 		logEl.className = 'water-log-item';
 		logEl.innerHTML = `
