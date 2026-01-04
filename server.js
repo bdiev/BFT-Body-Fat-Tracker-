@@ -155,7 +155,7 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS user_settings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL UNIQUE,
-      card_visibility TEXT DEFAULT '{"form":1,"history":1,"chart":1,"waterTracker":1,"waterChart":1}',
+      card_visibility TEXT DEFAULT '{"form":1,"history":1,"chart":1,"waterTracker":1,"waterChart":1,"weightTracker":1}',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -197,6 +197,20 @@ db.serialize(() => {
   `, (err) => {
     if (err) console.error('Ошибка создания таблицы water_logs:', err);
     else console.log('✓ Таблица water_logs готова');
+  });
+
+  // Таблица логов веса
+  db.run(`
+    CREATE TABLE IF NOT EXISTS weight_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      weight REAL NOT NULL,
+      logged_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `, (err) => {
+    if (err) console.error('Ошибка создания таблицы weight_logs:', err);
+    else console.log('✓ Таблица weight_logs готова');
   });
 });
 
@@ -371,6 +385,7 @@ const DEFAULT_CARD_VISIBILITY = {
   chart: true,
   waterTracker: true,
   waterChart: true,
+  weightTracker: true,
   lastResult: true
 };
 
@@ -384,6 +399,7 @@ function parseCardVisibility(raw) {
       chart: parsed.chart !== false,
       waterTracker: parsed.waterTracker !== false,
       waterChart: parsed.waterChart !== false,
+      weightTracker: parsed.weightTracker !== false,
       lastResult: parsed.lastResult !== false
     };
   } catch (e) {
@@ -413,6 +429,7 @@ app.post('/api/user-settings', authenticateToken, (req, res) => {
     chart: incoming.chart !== false,
     waterTracker: incoming.waterTracker !== false,
     waterChart: incoming.waterChart !== false,
+    weightTracker: incoming.weightTracker !== false,
     lastResult: incoming.lastResult !== false
   };
 
@@ -751,6 +768,68 @@ app.delete('/api/water-logs/:id', authenticateToken, (req, res) => {
     if (this.changes === 0) return res.status(404).json({ error: 'Лог не найден' });
     res.json({ message: 'Удалено' });
     notifyUserUpdate(req.userId, 'waterDeleted', { id: parseInt(req.params.id) });
+  });
+});
+
+// ===== МАРШРУТЫ ДЛЯ ТРЕКЕРА ВЕСА =====
+
+// Получить логи веса
+app.get('/api/weight-logs', authenticateToken, (req, res) => {
+  db.all('SELECT * FROM weight_logs WHERE user_id = ? ORDER BY logged_at DESC LIMIT 100', [req.userId], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Ошибка загрузки' });
+    res.json(rows || []);
+  });
+});
+
+// Добавить лог веса
+app.post('/api/weight/add', authenticateToken, (req, res) => {
+  const { weight } = req.body;
+  
+  if (!weight || weight <= 0) {
+    return res.status(400).json({ error: 'Некорректный вес' });
+  }
+  
+  const now = new Date().toISOString();
+  db.run('INSERT INTO weight_logs (user_id, weight, logged_at) VALUES (?, ?, ?)', [req.userId, weight, now], function(err) {
+    if (err) return res.status(500).json({ error: 'Ошибка сохранения' });
+    
+    const result = {
+      success: true,
+      id: this.lastID,
+      weight,
+      logged_at: now
+    };
+    
+    res.json(result);
+    notifyUserUpdate(req.userId, 'weightAdded', { id: this.lastID, weight, logged_at: now });
+  });
+});
+
+// Получить логи веса за период
+app.get('/api/weight-logs/period', authenticateToken, (req, res) => {
+  const period = req.query.period || 'month';
+  
+  const now = new Date();
+  let startDate;
+  
+  switch(period) {
+    case 'week':
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    case 'month':
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+    case 'year':
+      startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      break;
+    default:
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  }
+  
+  const startISO = startDate.toISOString();
+  db.all('SELECT * FROM weight_logs WHERE user_id = ? AND logged_at >= ? ORDER BY logged_at ASC', [req.userId, startISO], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Ошибка загрузки' });
+    res.json(rows || []);
   });
 });
 

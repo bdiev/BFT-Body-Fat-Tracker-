@@ -158,8 +158,9 @@
 						</label>
 						<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
 							<input type="checkbox" id="toggleWaterChartCard" /> График воды
-						</label>
-					</div>
+						</label>					<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+						<input type="checkbox" id="toggleWeightCard" /> Трекер веса
+					</label>					</div>
 					<div id="cardOrderSection" style="margin-top: 14px; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 12px; background: rgba(99, 102, 241, 0.05);">
 						<h4 style="margin: 0 0 10px; font-size: 15px; font-weight: 700;">Порядок карточек</h4>
 						<p class="muted" style="margin: 0 0 10px; font-size: 12px;">Перемещай карточки вверх/вниз, чтобы настроить порядок</p>
@@ -295,7 +296,42 @@
 			</div>
 			<canvas id="chart" height="280"></canvas>
 		</section>
+		<!-- СЕКЦИЯ ТРЕКЕРА ВЕСА -->
+				<section id="weightSection" class="card" style="display: none;">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 20px;">
+				<div>
+					<strong>⚖️ Трекер веса</strong>
+					<p class="muted" style="margin:4px 0 0;">Отслеживай изменения своего веса</p>
+				</div>
+				<div class="segmented" role="group" aria-label="Период">
+					<button id="weightPeriodWeek" type="button">Неделя</button>
+					<button id="weightPeriodMonth" class="active" type="button">Месяц</button>
+					<button id="weightPeriodYear" type="button">Год</button>
+				</div>
+			</div>
 
+			<!-- График веса -->
+			<canvas id="weightChart" height="300"></canvas>
+
+			<!-- История веса -->
+			<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 14px; margin-top: 20px;">
+				<div style="font-size: 12px; color: #a5b4fc; margin-bottom: 12px; font-weight: 600;">📋 История веса</div>
+				<div id="weightLogsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+					<p class="muted" style="font-size: 12px;">Добавляй записи о своем весе</p>
+				</div>
+			</div>
+
+			<!-- Форма добавления веса -->
+			<div style="margin-top: 14px; padding: 14px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px;">
+				<div style="display: flex; gap: 10px; align-items: flex-end;">
+					<div style="flex: 1;">
+						<label style="font-size: 12px; color: #a5b4fc; font-weight: 600; display: block; margin-bottom: 6px;">Вес (кг)</label>
+						<input id="weightInput" type="number" placeholder="Например, 75.5" inputmode="decimal" style="width: 100%; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);" />
+					</div>
+					<button id="addWeightBtn" class="primary" style="padding: 10px 16px; border: none; cursor: pointer; font-weight: 600; border-radius: 8px;">➕ Добавить</button>
+				</div>
+			</div>
+		</section>
 		<!-- СЕКЦИЯ ОТСЛЕЖИВАНИЯ ВОДЫ -->
 				<section id="waterSection" class="card" style="display: none;">
 			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 20px;">

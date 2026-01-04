@@ -19,12 +19,17 @@ let currentWaterPeriod = 'day';
 let currentWaterChartPeriod = 'day';
 let waterChartData = [];
 
+// Состояние трекера веса
+let weightLogs = [];
+let currentWeightPeriod = 'month';
+
 const CACHE_KEYS = {
 	user: 'cache_user',
 	history: 'cache_history',
 	userSettings: 'cache_user_settings',
 	waterSettings: 'cache_water_settings',
-	waterLogs: 'cache_water_logs'
+	waterLogs: 'cache_water_logs',
+	weightLogs: 'cache_weight_logs'
 };
 
 function saveCache(key, value) {
@@ -50,7 +55,8 @@ const defaultCardVisibility = () => ({
 	history: true,
 	chart: true,
 	waterTracker: true,
-	waterChart: true
+	waterChart: true,
+	weightTracker: true
 });
 
 const defaultCardOrder = () => [
@@ -58,7 +64,8 @@ const defaultCardOrder = () => [
 	'history',
 	'chart',
 	'waterTracker',
-	'waterChart'
+	'waterChart',
+	'weightTracker'
 ];
 
 let userSettings = {
@@ -323,7 +330,8 @@ function normalizeCardVisibility(visibility = {}) {
 		history: merged.history === true,
 		chart: merged.chart === true,
 		waterTracker: merged.waterTracker === true,
-		waterChart: merged.waterChart === true
+		waterChart: merged.waterChart === true,
+		weightTracker: merged.weightTracker === true
 	};
 }
 
@@ -364,7 +372,8 @@ const cardOrderNames = {
 	history: 'История прогресса',
 	chart: 'График жира',
 	waterTracker: 'Трекер воды',
-	waterChart: 'График воды'
+	waterChart: 'График воды',
+	weightTracker: 'Трекер веса'
 };
 
 function toggleCardElement(el, visible) {
@@ -379,6 +388,7 @@ function applyCardVisibility() {
 	toggleCardElement(document.getElementById('chart-section'), vis.chart);
 	toggleCardElement(document.getElementById('waterSection'), vis.waterTracker);
 	toggleCardElement(document.getElementById('waterChartSection'), vis.waterChart);
+	toggleCardElement(document.getElementById('weightSection'), vis.weightTracker);
 	applyCardOrder();
 }
 
@@ -389,7 +399,8 @@ function syncCardVisibilityUI() {
 		toggleHistoryCard: 'history',
 		toggleChartCard: 'chart',
 		toggleWaterCard: 'waterTracker',
-		toggleWaterChartCard: 'waterChart'
+		toggleWaterChartCard: 'waterChart',
+		toggleWeightCard: 'weightTracker'
 	};
 	Object.entries(map).forEach(([id, key]) => {
 		const el = document.getElementById(id);
@@ -409,7 +420,8 @@ function applyCardOrder() {
 		history: 'history-card',
 		chart: 'chart-section',
 		waterTracker: 'waterSection',
-		waterChart: 'waterChartSection'
+		waterChart: 'waterChartSection',
+		weightTracker: 'weightSection'
 	};
 
 	order.forEach((key) => {
@@ -706,6 +718,10 @@ function connectWebSocket(userId) {
 					console.log('💧 Обновление воды в реал-тайме:', msg.updateType, msg.data);
 					loadWaterLogs();
 					loadWaterChartData(currentWaterChartPeriod || 'day');
+				} else if (msg.updateType === 'weightAdded' || msg.updateType === 'weightDeleted') {
+					console.log('⚖️ Обновление веса в реал-тайме:', msg.updateType, msg.data);
+					loadWeightLogs();
+					loadWeightChartData(currentWeightPeriod || 'month');
 				}
 			}
 		} catch (e) {
@@ -1927,6 +1943,190 @@ function renderQuickButtonsList() {
 	});
 }
 
+// ===== ФУНКЦИИ ДЛЯ ТРЕКЕРА ВЕСА =====
+
+async function loadWeightLogs() {
+	try {
+		const logs = await apiCall('/api/weight-logs');
+		weightLogs = logs;
+		console.log('✓ Загружены логи веса:', weightLogs);
+		saveCache(CACHE_KEYS.weightLogs, weightLogs);
+		renderWeightLogs();
+	} catch (err) {
+		console.error('✗ Ошибка загрузки логов веса:', err);
+		const cached = loadCache(CACHE_KEYS.weightLogs, []);
+		if (!navigator.onLine && cached.length) {
+			weightLogs = cached;
+			renderWeightLogs();
+		}
+	}
+}
+
+async function loadWeightChartData(period = 'month') {
+	try {
+		const logs = await apiCall(`/api/weight-logs/period?period=${period}`);
+		currentWeightPeriod = period;
+		console.log('✓ Загружены данные для графика веса:', logs);
+		renderWeightChart(logs);
+	} catch (err) {
+		console.error('✗ Ошибка загрузки данных для графика веса:', err);
+		const cached = loadCache(CACHE_KEYS.weightLogs, []);
+		if (!navigator.onLine && cached.length) {
+			currentWeightPeriod = period;
+			renderWeightChart(cached);
+		}
+	}
+}
+
+function renderWeightLogs() {
+	const container = document.getElementById('weightLogsList');
+	if (!container) return;
+	
+	if (weightLogs.length === 0) {
+		container.innerHTML = '<p class="muted" style="font-size: 12px;">Добавляй записи о своем весе</p>';
+		return;
+	}
+	
+	container.innerHTML = '';
+	const sorted = [...weightLogs].sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
+	
+	sorted.slice(0, 10).forEach(log => {
+		const date = new Date(log.logged_at);
+		const dateStr = formatLocalDateTime(date, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+		
+		const div = document.createElement('div');
+		div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(99, 102, 241, 0.08); border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.1);';
+		div.innerHTML = `
+			<div style="font-weight: 600; font-size: 16px; color: #e0e7ff;">${log.weight} кг</div>
+			<div style="font-size: 12px; color: #a5b4fc;">${dateStr}</div>
+		`;
+		container.appendChild(div);
+	});
+}
+
+function renderWeightChart(data = []) {
+	const canvas = document.getElementById('weightChart');
+	if (!canvas) return;
+	
+	const ctx = canvas.getContext('2d');
+	const dpr = window.devicePixelRatio || 1;
+	const rect = canvas.getBoundingClientRect();
+	canvas.width = rect.width * dpr;
+	canvas.height = 320 * dpr;
+	canvas.style.width = '100%';
+	canvas.style.height = '320px';
+	
+	ctx.scale(dpr, dpr);
+	
+	if (!data || data.length === 0) {
+		const width = rect.width;
+		ctx.fillStyle = '#a5b4fc';
+		ctx.font = '14px "Space Grotesk", system-ui';
+		ctx.textAlign = 'center';
+		ctx.fillText('Нет данных для отображения', width / 2, 160);
+		return;
+	}
+	
+	const width = rect.width;
+	const height = 320;
+	const padding = 40;
+	
+	// Фон
+	ctx.fillStyle = 'rgba(99, 102, 241, 0.03)';
+	ctx.fillRect(padding, padding, width - padding * 2, height - padding * 2);
+	
+	// Найти min/max
+	const weights = data.map(d => d.weight);
+	const minWeight = Math.floor(Math.min(...weights) - 2);
+	const maxWeight = Math.ceil(Math.max(...weights) + 2);
+	
+	const scaleX = (i) => padding + (i / Math.max(1, data.length - 1)) * (width - padding * 2);
+	const scaleY = (w) => height - padding - ((w - minWeight) / (maxWeight - minWeight)) * (height - padding * 2);
+	
+	// Сетка по оси Y
+	ctx.strokeStyle = 'rgba(99, 102, 241, 0.1)';
+	ctx.lineWidth = 1;
+	ctx.fillStyle = '#a5b4fc';
+	ctx.font = '11px "Space Grotesk", system-ui';
+	
+	const step = Math.ceil((maxWeight - minWeight) / 4);
+	for (let w = minWeight; w <= maxWeight; w += step) {
+		const y = scaleY(w);
+		ctx.beginPath();
+		ctx.moveTo(padding, y);
+		ctx.lineTo(width - padding, y);
+		ctx.stroke();
+		ctx.fillText(`${w} кг`, padding - 30, y + 3);
+	}
+	
+	// Линия и точки
+	const accent = '#f59e0b';
+	ctx.beginPath();
+	data.forEach((point, index) => {
+		const x = scaleX(index);
+		const y = scaleY(point.weight);
+		if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+	});
+	ctx.strokeStyle = accent;
+	ctx.lineWidth = 3;
+	ctx.lineJoin = 'round';
+	ctx.lineCap = 'round';
+	ctx.stroke();
+	
+	// Точки
+	data.forEach((point, index) => {
+		const x = scaleX(index);
+		const y = scaleY(point.weight);
+		ctx.beginPath();
+		ctx.fillStyle = accent;
+		ctx.arc(x, y, 5, 0, Math.PI * 2);
+		ctx.fill();
+		
+		// Вес над точкой
+		ctx.font = '12px "Space Grotesk", system-ui';
+		ctx.fillStyle = '#e2e8f0';
+		ctx.textAlign = 'center';
+		ctx.fillText(`${point.weight}`, x, y - 10);
+	});
+	
+	// Даты на оси X
+	ctx.fillStyle = '#cbd5e1';
+	ctx.font = '11px "Space Grotesk", system-ui';
+	ctx.textAlign = 'center';
+	const step_x = Math.max(1, Math.floor(data.length / 6));
+	for (let i = 0; i < data.length; i += step_x) {
+		const date = new Date(data[i].logged_at);
+		const label = formatLocalDateTime(date, { month: 'short', day: 'numeric' });
+		const x = scaleX(i);
+		ctx.fillText(label, x, height - padding + 18);
+	}
+}
+
+function showNotification(message) {
+	const notif = document.createElement('div');
+	notif.className = 'notification';
+	notif.textContent = message;
+	notif.style.cssText = `
+		position: fixed;
+		bottom: 20px;
+		right: 20px;
+		background: rgba(16, 185, 129, 0.2);
+		border: 1px solid rgba(16, 185, 129, 0.3);
+		color: #86efac;
+		padding: 12px 16px;
+		border-radius: 8px;
+		z-index: 10000;
+		font-size: 14px;
+		font-weight: 600;
+	`;
+	document.body.appendChild(notif);
+	
+	setTimeout(() => {
+		notif.style.animation = 'fadeOut 0.3s ease forwards';
+		setTimeout(() => notif.remove(), 300);
+	}, 2000);
+}
+
 // Toggle change-password form visibility inside the account modal
 function toggleChangePasswordForm() {
 	const changeForm = document.getElementById('changePasswordForm');
@@ -2604,7 +2804,8 @@ const cardToggleMap = {
 	toggleHistoryCard: 'history',
 	toggleChartCard: 'chart',
 	toggleWaterCard: 'waterTracker',
-	toggleWaterChartCard: 'waterChart'
+	toggleWaterChartCard: 'waterChart',
+	toggleWeightCard: 'weightTracker'
 };
 
 Object.entries(cardToggleMap).forEach(([id, key]) => {
@@ -2696,6 +2897,57 @@ document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
 	document.getElementById('waterPeriodYear').classList.add('active');
 });
 
+// Обработчики для периодов веса
+document.getElementById('weightPeriodWeek')?.addEventListener('click', () => {
+	currentWeightPeriod = 'week';
+	loadWeightChartData('week');
+	document.getElementById('weightPeriodWeek').classList.add('active');
+	document.getElementById('weightPeriodMonth').classList.remove('active');
+	document.getElementById('weightPeriodYear').classList.remove('active');
+});
+
+document.getElementById('weightPeriodMonth')?.addEventListener('click', () => {
+	currentWeightPeriod = 'month';
+	loadWeightChartData('month');
+	document.getElementById('weightPeriodWeek').classList.remove('active');
+	document.getElementById('weightPeriodMonth').classList.add('active');
+	document.getElementById('weightPeriodYear').classList.remove('active');
+});
+
+document.getElementById('weightPeriodYear')?.addEventListener('click', () => {
+	currentWeightPeriod = 'year';
+	loadWeightChartData('year');
+	document.getElementById('weightPeriodWeek').classList.remove('active');
+	document.getElementById('weightPeriodMonth').classList.remove('active');
+	document.getElementById('weightPeriodYear').classList.add('active');
+});
+
+// Обработчик для добавления веса
+document.getElementById('addWeightBtn')?.addEventListener('click', async () => {
+	const weight = parseFloat(document.getElementById('weightInput').value);
+	if (!weight || weight <= 0) {
+		alert('Введи корректный вес');
+		return;
+	}
+	
+	try {
+		const response = await apiCall('/api/weight/add', {
+			method: 'POST',
+			body: JSON.stringify({ weight })
+		});
+		
+		if (response.success) {
+			document.getElementById('weightInput').value = '';
+			await loadWeightLogs();
+			loadWeightChartData(currentWeightPeriod);
+			showNotification('✅ Вес сохранен');
+		}
+	} catch (err) {
+		console.error('Ошибка при сохранении веса:', err);
+		alert('Ошибка: ' + err.message);
+	}
+});
+
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 (async () => {
 	try {
@@ -2714,6 +2966,7 @@ document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
 			if (autoLoginSuccess) {
 				await loadWaterSettings();
 				await loadWaterLogs();
+				await loadWeightLogs();
 			}
 		} else {
 			// Обычная загрузка данных пользователя (через cookies если есть)
@@ -2749,6 +3002,9 @@ document.getElementById('waterPeriodYear')?.addEventListener('click', () => {
 			
 			// Загружаем данные для графика воды
 			await loadWaterChartData('day');
+			
+			// Загружаем данные для графика веса
+			await loadWeightChartData('month');
 		}
 		
 		// Проверяем оффлайн-очередь при старте (если были данные до перезагрузки)
