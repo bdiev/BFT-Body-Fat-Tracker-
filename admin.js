@@ -111,14 +111,39 @@ let currentSort = { field: null, direction: 'asc' };
 async function loadStats() {
 	try {
 		const stats = await apiCall('/api/admin/stats');
+		console.log('📊 Получена статистика:', stats);
+		
 		document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
 		document.getElementById('adminCount').textContent = stats.adminCount || 0;
 		document.getElementById('totalEntries').textContent = stats.totalEntries || 0;
 		document.getElementById('totalWaterLogs').textContent = stats.totalWaterLogs || 0;
 		document.getElementById('totalWeightLogs').textContent = stats.totalWeightLogs || 0;
-		document.getElementById('totalVisits').textContent = stats.totalVisits || 0;
-		document.getElementById('registeredVisits').textContent = stats.registeredVisits || 0;
-		document.getElementById('anonymousVisits').textContent = stats.anonymousVisits || 0;
+		
+		// Новое добавление
+		const totalVisitsEl = document.getElementById('totalVisits');
+		const registeredVisitsEl = document.getElementById('registeredVisits');
+		const anonymousVisitsEl = document.getElementById('anonymousVisits');
+		
+		if (totalVisitsEl) {
+			totalVisitsEl.textContent = stats.totalVisits || 0;
+			console.log('✓ totalVisits установлен на:', stats.totalVisits || 0);
+		} else {
+			console.warn('⚠️ Элемент totalVisits не найден в DOM');
+		}
+		
+		if (registeredVisitsEl) {
+			registeredVisitsEl.textContent = stats.registeredVisits || 0;
+			console.log('✓ registeredVisits установлен на:', stats.registeredVisits || 0);
+		} else {
+			console.warn('⚠️ Элемент registeredVisits не найден в DOM');
+		}
+		
+		if (anonymousVisitsEl) {
+			anonymousVisitsEl.textContent = stats.anonymousVisits || 0;
+			console.log('✓ anonymousVisits установлен на:', stats.anonymousVisits || 0);
+		} else {
+			console.warn('⚠️ Элемент anonymousVisits не найден в DOM');
+		}
 
 		// Отображаем недавних пользователей
 		const recentList = document.getElementById('recentUsersList');

@@ -1174,22 +1174,26 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
                   stats.registeredVisits = 0;
                   stats.anonymousVisits = 0;
                   stats.totalVisits = 0;
+                  console.log('📊 Отправляем stats:', stats);
                   res.json(stats);
                   return;
                 }
                 
                 stats.registeredVisits = (row && row.count) ? row.count : 0;
+                console.log('✓ registeredVisits:', stats.registeredVisits);
                 
                 db.get('SELECT COUNT(*) as count FROM visits WHERE is_anonymous = 1', (err, row) => {
                   if (err) {
                     console.error('Ошибка получения anonymousVisits:', err);
                     stats.anonymousVisits = 0;
                     stats.totalVisits = stats.registeredVisits;
+                    console.log('📊 Отправляем stats:', stats);
                     res.json(stats);
                     return;
                   }
                   
                   stats.anonymousVisits = (row && row.count) ? row.count : 0;
+                  console.log('✓ anonymousVisits:', stats.anonymousVisits);
                   
                   db.get('SELECT COUNT(*) as count FROM visits', (err, row) => {
                     if (err) {
@@ -1198,6 +1202,8 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
                     } else {
                       stats.totalVisits = (row && row.count) ? row.count : 0;
                     }
+                    console.log('✓ totalVisits:', stats.totalVisits);
+                    console.log('📊 Отправляем stats:', stats);
                     res.json(stats);
                   });
                 });
