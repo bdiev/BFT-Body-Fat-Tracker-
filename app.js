@@ -1678,22 +1678,33 @@ function renderWaterLogs() {
 		// Для "сегодня" используем getLastWaterResetBoundary (как в progress bar)
 		const boundary = getLastWaterResetBoundary(waterSettings.reset_time);
 		logsForDay = waterLogs.filter(log => normalizeTimestamp(log.logged_at) >= boundary);
-		console.log(`  📍 Сегодня: используем boundary = ${new Date(boundary).toISOString()}`);
+		console.log(`  📍 Сегодня: используем reset_time = ${waterSettings.reset_time}`);
+		console.log(`  📍 boundary = ${new Date(boundary).toISOString()}`);
 		console.log(`  ✅ Найдено логов на сегодня (через boundary): ${logsForDay.length}`);
 	} else {
-		// Для прошлых дней сравниваем дни в локальном времени
+		// Для прошлых дней используем то же reset_time, что и для "сегодня"
+		// Начало дня = selectedDate в 00:00 + reset_time часов
+		const startOfDay = new Date(selectedDate);
+		const resetHour = parseInt(waterSettings.reset_time.split(':')[0], 10);
+		const resetMin = parseInt(waterSettings.reset_time.split(':')[1] || '0', 10);
+		startOfDay.setHours(resetHour, resetMin, 0, 0);
+		
+		// Конец дня = следующий день в reset_time
+		const endOfDay = new Date(startOfDay);
+		endOfDay.setDate(endOfDay.getDate() + 1);
+		
+		const startTimestamp = startOfDay.getTime();
+		const endTimestamp = endOfDay.getTime();
+		
 		logsForDay = waterLogs.filter(log => {
-			const logDate = new Date(log.logged_at);
-			const logLocalDate = new Date(logDate);
-			logLocalDate.setHours(0, 0, 0, 0);
+			const logTimestamp = new Date(log.logged_at).getTime();
+			const match = logTimestamp >= startTimestamp && logTimestamp < endTimestamp;
 			
-			const match = logLocalDate.getTime() === selectedDate.getTime();
-			
-			console.log(`  🔍 ${log.drink_type} (${log.logged_at}): локальная дата ${logLocalDate.toString()} ${match ? '✅' : '❌'}`);
+			console.log(`  🔍 ${log.drink_type} (${log.logged_at}): ${match ? '✅' : '❌'} [${startTimestamp}, ${endTimestamp})`);
 			
 			return match;
 		});
-		console.log('  Найдено логов на этот день:', logsForDay.length);
+		console.log('  Найдено логов на этот день (по reset_time):', logsForDay.length);
 	}
 	
 	// Сортируем от новых к старым
