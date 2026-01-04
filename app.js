@@ -1703,15 +1703,16 @@ function renderWaterLogs() {
 		console.log(`  ✅ Найдено логов на сегодня (через boundary): ${logsForDay.length}`);
 	} else {
 		// Для прошлых дней используем то же reset_time, что и для "сегодня"
-		// Начало дня = selectedDate в 00:00 + reset_time часов
-		const startOfDay = new Date(selectedDate);
+		// selectedDate это КОНЕЦ дня (не начало)
+		// Конец дня = selectedDate в reset_time
+		const endOfDay = new Date(selectedDate);
 		const resetHour = parseInt(waterSettings.reset_time.split(':')[0], 10);
 		const resetMin = parseInt(waterSettings.reset_time.split(':')[1] || '0', 10);
-		startOfDay.setHours(resetHour, resetMin, 0, 0);
+		endOfDay.setHours(resetHour, resetMin, 0, 0);
 		
-		// Конец дня = следующий день в reset_time
-		const endOfDay = new Date(startOfDay);
-		endOfDay.setDate(endOfDay.getDate() + 1);
+		// Начало дня = предыдущий день в reset_time
+		const startOfDay = new Date(endOfDay);
+		startOfDay.setDate(startOfDay.getDate() - 1);
 		
 		const startTimestamp = startOfDay.getTime();
 		const endTimestamp = endOfDay.getTime();
@@ -2058,8 +2059,6 @@ function setupWaterChartTooltip(canvas) {
 		const rect = canvas.getBoundingClientRect();
 		const x = e.clientX - rect.left;
 		const y = e.clientY - rect.top;
-		
-		console.log('🖱️ mousemove: x=' + Math.round(x) + ', y=' + Math.round(y) + ', points=' + waterChartPoints.length);
 		
 		// Проверяем, находимся ли мы над одной из точек
 		let hoveredPoint = null;
