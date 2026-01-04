@@ -632,6 +632,12 @@ async function saveUserSettings(partialVisibility = {}, newOrder = null) {
 	}
 }
 
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+function parseDecimalNumber(value) {
+	// Принимаем и точку и запятую как разделитель
+	return parseFloat(String(value).replace(',', '.'));
+}
+
 // ===== API ФУНКЦИИ =====
 async function apiCall(endpoint, options = {}) {
 	try {
@@ -950,7 +956,7 @@ function updateUserBadge() {
 			}
 			
 			// Показываем админ-панель если пользователь админ
-			if (adminPanelBtn && currentUserData?.is_admin) {
+			if (adminPanelBtn && currentUserData?.isAdmin) {
 				adminPanelBtn.style.display = '';
 			} else if (adminPanelBtn) {
 				adminPanelBtn.style.display = 'none';
@@ -2245,7 +2251,7 @@ async function handleGenderChange() {
 }
 
 async function saveWaterSettings() {
-	const weight = parseFloat(document.getElementById('waterWeight').value);
+	const weight = parseDecimalNumber(document.getElementById('waterWeight').value);
 	const activity = document.getElementById('waterActivity').value;
 	const resetTime = document.getElementById('waterResetTime').value;
 	let dailyGoal = parseInt(document.getElementById('waterGoal').value);
@@ -2279,7 +2285,7 @@ async function saveWaterSettings() {
 }
 
 async function autoSaveWaterSettings() {
-	const weight = parseFloat(document.getElementById('waterWeight').value);
+	const weight = parseDecimalNumber(document.getElementById('waterWeight').value);
 	const activity = document.getElementById('waterActivity').value;
 	const resetTime = document.getElementById('waterResetTime').value;
 	let dailyGoal = parseInt(document.getElementById('waterGoal').value);
@@ -2320,10 +2326,10 @@ async function handleCalculate() {
 		return;
 	}
 
-	const h = parseFloat(document.getElementById('height').value);
-	const n = parseFloat(document.getElementById('neck').value);
-	const w = parseFloat(document.getElementById('waist').value);
-	const hip = parseFloat(document.getElementById('hip').value);
+	const h = parseDecimalNumber(document.getElementById('height').value);
+	const n = parseDecimalNumber(document.getElementById('neck').value);
+	const w = parseDecimalNumber(document.getElementById('waist').value);
+	const hip = parseDecimalNumber(document.getElementById('hip').value);
 
 	if (!h || !n || !w || h <= 0 || n <= 0 || w <= 0 || (sexState.current === 'female' && (!hip || hip <= 0))) {
 		currentResult.textContent = '—';
@@ -2835,7 +2841,7 @@ document.getElementById('waterActivity')?.addEventListener('change', autoSaveWat
 document.getElementById('waterResetTime')?.addEventListener('change', autoSaveWaterSettings);
 document.getElementById('waterGoal')?.addEventListener('change', autoSaveWaterSettings);
 document.getElementById('recalculateWaterBtn')?.addEventListener('click', () => {
-	const weight = parseFloat(document.getElementById('waterWeight').value);
+	const weight = parseDecimalNumber(document.getElementById('waterWeight').value);
 	const activity = document.getElementById('waterActivity').value;
 	
 	if (!weight || weight <= 0) {
@@ -2927,7 +2933,7 @@ document.getElementById('weightPeriodYear')?.addEventListener('click', () => {
 
 // Обработчик для добавления веса
 document.getElementById('addWeightBtn')?.addEventListener('click', async () => {
-	const weight = parseFloat(document.getElementById('weightInput').value);
+	const weight = parseDecimalNumber(document.getElementById('weightInput').value);
 	if (!weight || weight <= 0) {
 		alert('Введи корректный вес');
 		return;
