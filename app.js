@@ -19,7 +19,7 @@ let waterLogs = [];
 let currentWaterPeriod = 'day';
 let currentWaterChartPeriod = 'day';
 let waterChartData = [];
-let currentWaterLogsDate = new Date(); // Текущий выбранный день для логов
+let currentWaterLogsDate = startOfTodayLocal(); // Текущий выбранный день для логов, привязан к полуночной границе
 let waterChartPoints = []; // Координаты точек для hover
 let waterChartTooltipInitialized = false; // Флаг инициализации tooltip
 
@@ -1703,23 +1703,20 @@ function renderWaterLogs() {
 		const boundary = getLastWaterResetBoundary(waterSettings.reset_time);
 		logsForDay = waterLogs.filter(log => normalizeTimestamp(log.logged_at) >= boundary);
 	} else {
-		// Для прошлых дней используем то же reset_time, что и для "сегодня"
-		// selectedDate это КОНЕЦ дня (не начало)
-		// Конец дня = selectedDate в reset_time
-		const endOfDay = new Date(selectedDate);
+		// Для прошлых дней используем ту же границу reset_time, но сам день берём от выбранной даты
+		const dayStart = new Date(selectedDate);
 		const resetHour = parseInt(waterSettings.reset_time.split(':')[0], 10);
 		const resetMin = parseInt(waterSettings.reset_time.split(':')[1] || '0', 10);
-		endOfDay.setHours(resetHour, resetMin, 0, 0);
+		dayStart.setHours(resetHour, resetMin, 0, 0);
 		
-		// Начало дня = предыдущий день в reset_time
-		const startOfDay = new Date(endOfDay);
-		startOfDay.setDate(startOfDay.getDate() - 1);
+		const dayEnd = new Date(dayStart);
+		dayEnd.setDate(dayEnd.getDate() + 1);
 		
-		const startTimestamp = startOfDay.getTime();
-		const endTimestamp = endOfDay.getTime();
+		const startTimestamp = dayStart.getTime();
+		const endTimestamp = dayEnd.getTime();
 		
 		logsForDay = waterLogs.filter(log => {
-			const logTimestamp = new Date(log.logged_at).getTime();
+			const logTimestamp = normalizeTimestamp(log.logged_at).getTime();
 			const match = logTimestamp >= startTimestamp && logTimestamp < endTimestamp;
 			return match;
 		});
@@ -1727,7 +1724,7 @@ function renderWaterLogs() {
 	
 	// Сортируем от новых к старым
 	const sorted = logsForDay.sort((a, b) => 
-		new Date(b.logged_at).getTime() - new Date(a.logged_at).getTime()
+		normalizeTimestamp(b.logged_at).getTime() - normalizeTimestamp(a.logged_at).getTime()
 	);
 	
 	// Обновляем дату и итого
@@ -1766,7 +1763,7 @@ function renderWaterLogs() {
 	container.innerHTML = '';
 
 	sorted.forEach(log => {
-		const logDate = new Date(log.logged_at);
+		const logDate = normalizeTimestamp(log.logged_at);
 		const time = logDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 		const logEl = document.createElement('div');
 		logEl.className = 'water-log-item';
