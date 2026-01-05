@@ -1464,4 +1464,109 @@ app.get('/api/water-logs/period', authenticateToken, (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Сервер слушает http://localhost:${PORT}`);
+  console.log('💡 Консольные команды:');
+  console.log('   op <login> - дать права администратора');
+  console.log('   deop <login> - забрать права администратора');
 });
+
+// ===== КОНСОЛЬНЫЕ КОМАНДЫ =====
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  prompt: '> '
+});
+
+rl.on('line', (line) => {
+  const input = line.trim();
+  const parts = input.split(/\s+/);
+  const command = parts[0];
+  const username = parts[1];
+
+  if (command === 'op' && username) {
+    // Дать права администратора
+    db.get('SELECT id, username, is_admin FROM users WHERE username = ?', [username], (err, user) => {
+      if (err) {
+        console.log('❌ Ошибка БД:', err.message);
+        rl.prompt();
+        return;
+      }
+      if (!user) {
+        console.log(`❌ Пользователь "${username}" не найден`);
+        rl.prompt();
+        return;
+      }
+      if (user.is_admin) {
+        console.log(`⚠️  Пользователь "${username}" уже является администратором`);
+        rl.prompt();
+        return;
+      }
+
+      db.run('UPDATE users SET is_admin = 1 WHERE id = ?', [user.id], function(err) {
+        if (err) {
+          console.log('❌ Ошибка обновления:', err.message);
+          rl.prompt();
+          return;
+        }
+        console.log(`✅ Пользователь "${username}" получил права администратора`);
+        
+        // Отправляем уведомление пользователю в реал-тайме
+        notifyUserUpdate(user.id, 'adminRightsGranted', { 
+          message: '🎉 Вам предоставлены права администратора!',
+          isAdmin: true 
+        });
+        
+        rl.prompt();
+      });
+    });
+  } else if (command === 'deop' && username) {
+    // Забрать права администратора
+    db.get('SELECT id, username, is_admin FROM users WHERE username = ?', [username], (err, user) => {
+      if (err) {
+        console.log('❌ Ошибка БД:', err.message);
+        rl.prompt();
+        return;
+      }
+      if (!user) {
+        console.log(`❌ Пользователь "${username}" не найден`);
+        rl.prompt();
+        return;
+      }
+      if (!user.is_admin) {
+        console.log(`⚠️  Пользователь "${username}" не является администратором`);
+        rl.prompt();
+        return;
+      }
+
+      db.run('UPDATE users SET is_admin = 0 WHERE id = ?', [user.id], function(err) {
+        if (err) {
+          console.log('❌ Ошибка обновления:', err.message);
+          rl.prompt();
+          return;
+        }
+        console.log(`✅ У пользователя "${username}" забраны права администратора`);
+        
+        // Отправляем уведомление пользователю в реал-тайме
+        notifyUserUpdate(user.id, 'adminRightsRevoked', { 
+          message: '⚠️ Ваши права администратора были отозваны',
+          isAdmin: false 
+        });
+        
+        rl.prompt();
+      });
+    });
+  } else if (command === 'help' || command === '?') {
+    console.log('💡 Доступные команды:');
+    console.log('   op <login>   - дать права администратора пользователю');
+    console.log('   deop <login> - забрать права администратора у пользователя');
+    console.log('   help         - показать эту справку');
+    rl.prompt();
+  } else if (input) {
+    console.log(`❌ Неизвестная команда: "${command}". Используй "help" для справки.`);
+    rl.prompt();
+  } else {
+    rl.prompt();
+  }
+});
+
+rl.prompt();

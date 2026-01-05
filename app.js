@@ -793,6 +793,32 @@ function connectWebSocket(userId) {
 					console.log('⚖️ Обновление веса в реал-тайме:', msg.updateType, msg.data);
 					loadWeightLogs();
 					loadWeightChartData(currentWeightPeriod || 'month');
+				} else if (msg.updateType === 'adminRightsGranted') {
+					// Пользователю выданы права администратора
+					console.log('🎉 Права администратора получены!');
+					currentUserData.isAdmin = true;
+					
+					// Показываем кнопку админ-панели
+					const adminPanelBtn = document.getElementById('adminPanelBtn');
+					if (adminPanelBtn) {
+						adminPanelBtn.style.display = 'block';
+					}
+					
+					// Показываем уведомление
+					showNotification(msg.data.message || '🎉 Вам предоставлены права администратора!');
+				} else if (msg.updateType === 'adminRightsRevoked') {
+					// У пользователя забраны права администратора
+					console.log('⚠️ Права администратора отозваны');
+					currentUserData.isAdmin = false;
+					
+					// Скрываем кнопку админ-панели
+					const adminPanelBtn = document.getElementById('adminPanelBtn');
+					if (adminPanelBtn) {
+						adminPanelBtn.style.display = 'none';
+					}
+					
+					// Показываем уведомление
+					showNotification(msg.data.message || '⚠️ Ваши права администратора были отозваны');
 				}
 			}
 		} catch (e) {
