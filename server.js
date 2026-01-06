@@ -20,6 +20,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 app.use(cookieParser());
 
+// Явно отдаём фавикон, чтобы мобильные браузеры и Google могли его забрать
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'icons', 'tabicon.png'));
+});
+
 // Логирование всех запросов
 app.use((req, res, next) => {
   console.log(`\n📨 ${req.method} ${req.path} from ${req.ip}`);
