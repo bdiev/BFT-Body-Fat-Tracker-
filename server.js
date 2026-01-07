@@ -995,6 +995,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Защищаем админ-панель (требуются права администратора)
+app.get('/admin.html', requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // ===== АДМИН ПАНЕЛЬ API =====
 
 // Middleware проверки прав администратора

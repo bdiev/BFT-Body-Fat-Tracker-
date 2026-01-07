@@ -1028,7 +1028,6 @@ function updateUserBadge() {
 		const loginForm = document.getElementById('loginForm');
 		const modalTitle = document.getElementById('modalTitle');
 		const landingPage = document.getElementById('landingPage');
-		const appContent = document.getElementById('appContent');
 		const mainHeader = document.getElementById('mainHeader');
 		const userAccountBtn = document.getElementById('userAccountBtn');
 		const settingsBtn = document.getElementById('settingsBtn');
@@ -1038,17 +1037,24 @@ function updateUserBadge() {
 		const adminPanelBtn = document.getElementById('adminPanelBtn');
 		
 		if (authenticated && currentUser) {
-			// Скрываем landing page, показываем приложение
-			landingPage.style.display = 'none';
-			appContent.style.display = 'block';
-			mainHeader.style.display = 'flex';
+			// Редирект на main.html только если мы на landing page
+			if (landingPage && window.location.pathname === '/' || window.location.pathname === '/index.html') {
+				window.location.href = '/main.html';
+				return;
+			}
+			
+			// На других страницах просто скрываем landing и показываем header
+			if (landingPage) landingPage.style.display = 'none';
+			if (mainHeader) mainHeader.style.display = 'flex';
 			
 			// Показываем кнопки аккаунта и настроек
-		userAccountBtn.textContent = '👤 ' + currentUser;
-		userAccountBtn.style.display = 'inline-flex';
-		settingsBtn.style.display = 'inline-flex';
-		logoutBtn.style.display = 'inline-flex';
-		openAuthModal.style.display = 'none';
+			if (userAccountBtn) {
+				userAccountBtn.textContent = '👤 ' + currentUser;
+				userAccountBtn.style.display = 'inline-flex';
+			}
+			if (settingsBtn) settingsBtn.style.display = 'inline-flex';
+			if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+			if (openAuthModal) openAuthModal.style.display = 'none';
 		
 		// Обновляем имя в модале аккаунта
 		if (accountDisplayName) {
@@ -1067,17 +1073,22 @@ function updateUserBadge() {
 				adminPanelBtn.style.display = 'none';
 			}
 			
-			loginBtn.style.display = 'none';
-			toggleSignupBtn.style.display = 'none';
+			if (typeof loginBtn !== 'undefined' && loginBtn) loginBtn.style.display = 'none';
+			if (typeof toggleSignupBtn !== 'undefined' && toggleSignupBtn) toggleSignupBtn.style.display = 'none';
 		} else {
-			// Показываем landing page, скрываем приложение
-			landingPage.style.display = 'block';
-			appContent.style.display = 'none';
-			mainHeader.style.display = 'none';
+			// Редирект на / если не авторизован и не на landing странице
+			if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+				window.location.href = '/';
+				return;
+			}
 			
-			userAccountBtn.style.display = 'none';
-			settingsBtn.style.display = 'none';
-			logoutBtn.style.display = 'none';
+			// Показываем landing page, скрываем header
+			if (landingPage) landingPage.style.display = 'block';
+			if (mainHeader) mainHeader.style.display = 'none';
+			
+			if (userAccountBtn) userAccountBtn.style.display = 'none';
+			if (settingsBtn) settingsBtn.style.display = 'none';
+			if (logoutBtn) logoutBtn.style.display = 'none';
 			openAuthModal.style.display = '';
 			loginForm.style.display = 'block';
 			signupForm.style.display = 'none';
@@ -3392,10 +3403,8 @@ document.getElementById('addWeightBtn')?.addEventListener('click', async () => {
 				document.body.classList.add('page-ready');
 				if (!authenticated) {
 					const landing = document.getElementById('landingPage');
-					const appContent = document.getElementById('appContent');
 					const mainHeader = document.getElementById('mainHeader');
 					landing && (landing.style.display = 'block');
-					appContent && (appContent.style.display = 'none');
 					mainHeader && (mainHeader.style.display = 'none');
 				}
 			});

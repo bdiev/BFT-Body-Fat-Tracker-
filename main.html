@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+	<meta name="color-scheme" content="dark" />
+	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1116" />
+	<meta name="application-name" content="Sport Notepad" />
+	<title>Главная - Sport Notepad</title>
+	<link rel="icon" type="image/png" sizes="32x32" href="/icons/tabicon.png" />
+	<link rel="apple-touch-icon" sizes="180x180" href="/icons/siteicon.png" />
+	<link rel="manifest" href="/manifest.json" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+	<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+	<div class="wrap">
+		<header>
+			<div class="header-bar">
+				<div style="display: flex; align-items: center; gap: 12px;">
+					<button class="pill-btn" id="settingsBtn" title="Настройки">⚙️</button>
+					<button class="pill-btn" id="accountBtn" style="display:none;" title="Аккаунт">👤</button>
+				</div>
+				<div style="display: flex; align-items: center; gap: 8px;">
+					<a href="/profile.html" class="pill-btn" title="Профиль">Профиль</a>
+					<button class="pill-btn" id="logoutBtn" style="display:none;" title="Выйти">🚪 Выйти</button>
+				</div>
+			</div>
+			<h1 class="title">Личный блокнот</h1>
+			<p class="subtitle">Веди учет своих данных и прогресса</p>
+		</header>
+
+		<!-- Основной контент приложения -->
+		<section id="appContent">
+			<div id="cardsContainer" class="cards-grid">
+				<div class="card" id="form-card">
+				<div class="inputs">
+					<div>
+						<label for="height">Рост (см)</label>
+						<input id="height" type="number" inputmode="decimal" placeholder="Например, 178" />
+					</div>
+					<div>
+						<label for="neck">Обхват шеи (см)</label>
+						<input id="neck" type="number" inputmode="decimal" placeholder="Например, 38" />
+					</div>
+					<div>
+						<label for="waist">Обхват талии (см)</label>
+						<input id="waist" type="number" inputmode="decimal" placeholder="Например, 82" />
+					</div>
+					<div id="hip-wrap" style="display:none;">
+						<label for="hip">Обхват бёдер (см)</label>
+						<input id="hip" type="number" inputmode="decimal" placeholder="Только для женщин" />
+					</div>
+				</div>
+
+				<div class="actions">
+					<button class="primary" id="calcBtn" type="button">Рассчитать и сохранить</button>
+					<button class="ghost" id="clearBtn" type="button">Очистить историю</button>
+				</div>
+
+				<div class="result" aria-live="polite">
+					<div>
+						<div class="muted">Получилось</div>
+						<div class="number" id="current-result">—</div>
+					</div>
+					<div class="muted" id="current-note">Заполни данные выше</div>
+				</div>
+			</div>
+
+				<div class="card" id="history-card">
+				<div style="display:flex; justify-content: space-between; align-items:center;">
+					<strong>Твой прогресс</strong>
+					<span class="muted" id="history-count">0 записей</span>
+				</div>
+				<div class="history" id="history"></div>
+				<div id="entryDetailInline" class="entry-detail-inline" aria-live="polite" style="display:none;"></div>
+			</div>
+
+				<section class="card" id="chart-section">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap;">
+				<div>
+					<strong>Визуально видна траектория</strong>
+					<p class="muted" style="margin:4px 0 0;">Каждая точка — твой расчёт, линия показывает тренд</p>
+				</div>
+			</div>
+			<canvas id="chart" height="280"></canvas>
+		</section>
+		
+		<!-- СЕКЦИЯ ТРЕКЕРА ВЕСА -->
+				<section id="weightSection" class="card">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 20px;">
+				<div>
+					<strong>⚖️ Трекер веса</strong>
+					<p class="muted" style="margin:4px 0 0;">Отслеживай изменения своего веса</p>
+				</div>
+				<div class="segmented" role="group" aria-label="Период">
+					<button id="weightPeriodWeek" type="button">Неделя</button>
+					<button id="weightPeriodMonth" class="active" type="button">Месяц</button>
+					<button id="weightPeriodYear" type="button">Год</button>
+				</div>
+			</div>
+
+			<canvas id="weightChart" height="300"></canvas>
+
+			<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 14px; margin-top: 20px;">
+				<div style="font-size: 12px; color: #a5b4fc; margin-bottom: 12px; font-weight: 600;">📋 История веса</div>
+				<div id="weightLogsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+					<p class="muted" style="font-size: 12px;">Добавляй записи о своем весе</p>
+				</div>
+			</div>
+
+			<div style="margin-top: 14px; padding: 14px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px;">
+				<div style="display: flex; gap: 10px; align-items: flex-end;">
+					<div style="flex: 1;">
+						<label style="font-size: 12px; color: #a5b4fc; font-weight: 600; display: block; margin-bottom: 6px;">Вес (кг)</label>
+						<input id="weightInput" type="number" placeholder="Например, 75.5" inputmode="decimal" style="width: 100%; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);" />
+					</div>
+					<button id="addWeightBtn" class="primary" style="padding: 10px 16px; border: none; cursor: pointer; font-weight: 600; border-radius: 8px;">➕ Добавить</button>
+				</div>
+			</div>
+		</section>
+
+		<!-- СЕКЦИЯ ТАЙМЕРА ТРЕНИРОВОК -->
+		<section id="restTimerSection" class="card">
+			<div style="margin-bottom: 20px;">
+				<strong>⏱️ Таймер отдыха</strong>
+				<p class="muted" style="margin:4px 0 0;">Отслеживай время отдыха между подходами</p>
+			</div>
+
+			<div style="text-align: center; margin: 24px 0;">
+				<div id="timerDisplay" style="font-size: 72px; font-weight: 700; color: #6366f1; font-variant-numeric: tabular-nums; letter-spacing: -2px;">00:00</div>
+				<div id="timerStatus" style="font-size: 14px; color: #a5b4fc; margin-top: 8px;">Выбери время отдыха</div>
+			</div>
+
+			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 16px;">
+				<button class="timer-preset-btn" data-seconds="60" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">1:00</button>
+				<button class="timer-preset-btn" data-seconds="90" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">1:30</button>
+				<button class="timer-preset-btn" data-seconds="120" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">2:00</button>
+				<button class="timer-preset-btn timer-custom-btn" data-custom-id="1" data-seconds="180" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s; position: relative;">
+					<span class="timer-label">3:00</span>
+					<span style="position: absolute; top: 2px; right: 4px; font-size: 10px; opacity: 0.5;">⚙️</span>
+				</button>
+				<button class="timer-preset-btn timer-custom-btn" data-custom-id="2" data-seconds="240" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s; position: relative;">
+					<span class="timer-label">4:00</span>
+					<span style="position: absolute; top: 2px; right: 4px; font-size: 10px; opacity: 0.5;">⚙️</span>
+				</button>
+				<button class="timer-preset-btn timer-custom-btn" data-custom-id="3" data-seconds="300" style="padding: 12px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; color: #e0e7ff; font-weight: 600; cursor: pointer; transition: all 0.2s; position: relative;">
+					<span class="timer-label">5:00</span>
+					<span style="position: absolute; top: 2px; right: 4px; font-size: 10px; opacity: 0.5;">⚙️</span>
+				</button>
+			</div>
+
+			<p class="muted" style="margin: 0 0 16px; font-size: 12px; text-align: center;">💡 Удержи кнопку с ⚙️ чтобы настроить свое время</p>
+
+			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+				<button id="startTimerBtn" class="primary" style="padding: 14px; border: none; cursor: pointer; font-weight: 600; border-radius: 10px; font-size: 16px;" disabled>▶️ Старт</button>
+				<button id="stopTimerBtn" style="padding: 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; cursor: pointer; font-weight: 600; border-radius: 10px; font-size: 16px;" disabled>⏹️ Стоп</button>
+			</div>
+		</section>
+		
+		<!-- СЕКЦИЯ ОТСЛЕЖИВАНИЯ ВОДЫ -->
+				<section id="waterSection" class="card" style="display: none;">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 20px;">
+				<div>
+					<strong>💧 Отслеживание воды</strong>
+					<p class="muted" style="margin:4px 0 0;">Сколько воды ты выпил сегодня</p>
+				</div>
+				<button class="pill-btn" id="waterSettingsBtn" style="font-size: 12px; padding: 8px 14px;">⚙️ Настройки</button>
+			</div>
+
+			<div style="margin-bottom: 24px;">
+				<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+					<span class="muted" style="font-size: 12px;">Выпито</span>
+					<span id="waterProgress" style="font-weight: 600; color: #74c0fc;">0 / 2000 мл</span>
+				</div>
+				<div id="waterBar" style="height: 24px; background: rgba(99, 102, 241, 0.08); border-radius: 12px; overflow: hidden; border: 1px solid rgba(99, 102, 241, 0.15);">
+					<div id="waterBarFill" style="height: 100%; background: linear-gradient(90deg, #5dade2, #74c0fc); width: 0%; transition: width 0.3s ease; border-radius: 12px;"></div>
+				</div>
+			</div>
+
+			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px;" id="waterQuickButtons">
+			</div>
+
+			<div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 14px;">
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+					<div>
+						<div style="font-size: 12px; color: #a5b4fc; font-weight: 600;">📋 История</div>
+						<div id="waterLogsDate" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Сегодня</div>
+					</div>
+					<div style="display: flex; gap: 6px;">
+						<button id="waterLogsPrevBtn" class="pill-btn" style="font-size: 12px; padding: 6px 10px; width: auto;">← Назад</button>
+						<button id="waterLogsNextBtn" class="pill-btn" style="font-size: 12px; padding: 6px 10px; width: auto;">Вперед →</button>
+					</div>
+				</div>
+				<div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(99, 102, 241, 0.2);">
+					<div style="font-size: 12px; color: #a5b4fc;">Итого: <span id="waterLogsTotal" style="font-weight: 600;">0 мл</span></div>
+				</div>
+				<div id="waterLogsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+					<p class="muted" style="font-size: 12px;">Добавляй воду и напитки</p>
+				</div>
+			</div>
+		</section>
+
+				<!-- СЕКЦИЯ ГРАФИКА ВОДЫ -->
+						<section id="waterChartSection" class="card">
+			<div style="display:flex; justify-content: space-between; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 20px;">
+				<div>
+					<strong>📊 График потребления воды</strong>
+					<p class="muted" style="margin:4px 0 0;">Отслеживай сколько воды ты выпил за разные периоды</p>
+				</div>
+				<div class="segmented" role="group" aria-label="Период">
+					<button id="waterPeriodDay" class="active" type="button">День</button>
+					<button id="waterPeriodWeek" type="button">Неделя</button>
+					<button id="waterPeriodMonth" type="button">Месяц</button>
+					<button id="waterPeriodYear" type="button">Год</button>
+				</div>
+			</div>
+			<canvas id="waterChart" height="300"></canvas>
+				</section>
+			</div>
+		</section>
+	</div>
+
+	<!-- Footer -->
+	<footer class="site-footer">
+		<div class="footer-content">
+			<p class="footer-text">Made by bdiev</p>
+			<div class="footer-links">
+				<a href="https://github.com/bdiev" target="_blank" rel="noopener noreferrer" class="footer-link">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+						</svg>
+						GitHub
+					</a>
+					<a href="https://www.instagram.com/rightinthemiddleofnowhere/" target="_blank" rel="noopener noreferrer" class="footer-link">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+						</svg>
+						Instagram
+					</a>
+				</div>
+			</div>
+		</footer>
+
+	<!-- Модаль настроек интерфейса -->
+	<div class="modal-overlay" id="settingsModal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>⚙️ Настройки</h2>
+				<button class="modal-close" id="closeSettingsModal" aria-label="Закрыть">✕</button>
+			</div>
+			<div class="modal-body">
+				<div id="cardVisibilitySection" class="account-toggle" style="border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; background: rgba(99, 102, 241, 0.05);">
+					<h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 700;">Видимость карточек</h3>
+					<p class="muted" style="margin: 0 0 12px; font-size: 12px;">Выбери, что показывать на главной странице</p>
+					<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;">
+						<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+							<input type="checkbox" id="toggleFormCard" /> Форма расчёта
+						</label>
+						<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+							<input type="checkbox" id="toggleHistoryCard" /> История
+						</label>
+						<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+							<input type="checkbox" id="toggleChartCard" /> График жира
+						</label>
+						<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+							<input type="checkbox" id="toggleWaterTracker" /> Трекер воды
+						</label>
+						<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+							<input type="checkbox" id="toggleWaterChart" /> График воды
+						</label>
+						<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+							<input type="checkbox" id="toggleWeightTracker" /> Трекер веса
+						</label>
+						<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+							<input type="checkbox" id="toggleRestTimer" /> Таймер отдыха
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Модаль настроек воды -->
+	<div class="modal-overlay" id="waterSettingsModal">
+		<div class="modal-content" style="max-width: 500px;">
+			<div class="modal-header">
+				<h2>Настройки отслеживания воды</h2>
+				<button class="modal-close" id="closeWaterSettingsModal" aria-label="Закрыть">✕</button>
+			</div>
+			<div class="modal-body">
+				<div style="margin-bottom: 20px;">
+					<label for="waterWeight" class="label">Твой вес (кг)</label>
+					<input id="waterWeight" type="number" placeholder="Например, 75" style="width: 100%; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);" />
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<label for="waterActivity" class="label">Уровень активности</label>
+				<select id="waterActivity" style="width: 100%; padding: 12px 16px; border: 1.5px solid rgba(99, 102, 241, 0.15); background: rgba(37, 45, 61, 0.8); border-radius: 12px; color: var(--text-dark); font-size: 16px; cursor: pointer; transition: all 0.3s ease;">
+					<option value="low" style="background: #1a1f2e; color: #f8f9fb;">🪑 Низкая (сидячая работа)</option>
+					<option value="moderate" style="background: #1a1f2e; color: #f8f9fb;">🚶 Умеренная (обычный образ жизни)</option>
+					<option value="high" style="background: #1a1f2e; color: #f8f9fb;">🏃 Высокая (много спорта)</option>
+					</select>
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<label for="waterResetTime" class="label">Время ежедневного сброса</label>
+					<input id="waterResetTime" type="time" value="00:00" style="width: 100%; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);" />
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<label for="waterGoal" class="label">Дневная норма (мл)</label>
+				<div style="display: flex; gap: 10px;">
+					<input id="waterGoal" type="number" placeholder="Например, 2000" style="flex: 1; padding: 10px; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.05); border-radius: 8px; color: var(--text);" />
+					<button id="recalculateWaterBtn" class="ghost" style="padding: 10px 16px; white-space: nowrap;">🔄 Пересчет</button>
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<label class="label">Быстрые кнопки</label>
+					<div id="quickButtonsList" style="display: flex; flex-direction: column; gap: 8px;">
+					</div>
+					<button id="addQuickButtonBtn" class="ghost" style="width: 100%; margin-top: 10px; padding: 10px;">+ Добавить кнопку</button>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button class="ghost" id="closeWaterSettingsBtn">Закрыть</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Модаль для подробной информации о записи -->
+	<div class="modal-overlay" id="entryDetailModal">
+		<div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+			<div class="modal-header">
+				<h2 id="entryDetailTitle">Подробно о записи</h2>
+				<button class="modal-close" id="closeEntryModal" aria-label="Закрыть">✕</button>
+			</div>
+			<div class="modal-body">
+				<div id="entryDetailContent">
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="./app.js"></script>
+</body>
+</html>
