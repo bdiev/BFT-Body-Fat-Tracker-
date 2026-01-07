@@ -1727,7 +1727,15 @@ function renderWaterLogs() {
 	if (selectedDate.getTime() === today.getTime()) {
 		// Для "сегодня" используем getLastWaterResetBoundary (как в progress bar)
 		const boundary = getLastWaterResetBoundary(waterSettings.reset_time);
-		logsForDay = waterLogs.filter(log => normalizeTimestamp(log.logged_at) >= boundary);
+		
+		// Конец периода для "сегодня" = следующая граница сброса (завтра в reset_time)
+		const nextBoundary = new Date(boundary);
+		nextBoundary.setDate(nextBoundary.getDate() + 1);
+		
+		logsForDay = waterLogs.filter(log => {
+			const logTs = normalizeTimestamp(log.logged_at).getTime();
+			return logTs >= boundary.getTime() && logTs < nextBoundary.getTime();
+		});
 	} else {
 		// Для прошлых дней используем ту же границу reset_time, но сам день берём от выбранной даты
 		const dayStart = new Date(selectedDate);
