@@ -178,6 +178,8 @@ async function processOfflineQueue() {
 			await loadUserSettings();
 			await loadWaterSettings();
 			await loadWaterLogs();
+			await loadWeightLogs();
+			await loadWeightChartData(currentWeightPeriod || 'month');
 			renderHistory();
 			drawChart();
 		}
@@ -1234,6 +1236,12 @@ async function autoLogin(username, password) {
 		}
 		await loadUserSettings();
 		
+		// Загружаем историю веса и воды
+		await loadWeightLogs();
+		await loadWeightChartData(currentWeightPeriod || 'month');
+		await loadWaterSettings();
+		await loadWaterLogs();
+		
 		updateUserBadge();
 		return true;
 	} catch (err) {
@@ -1305,6 +1313,10 @@ async function handleLogin() {
 		// Загружаем настройки воды и логи
 		await loadWaterSettings();
 		await loadWaterLogs();
+		
+		// Загружаем историю веса
+		await loadWeightLogs();
+		await loadWeightChartData(currentWeightPeriod || 'month');
 		
 		// Запускаем периодическую синхронизацию настроек карточек
 		if (!window.cardSyncInterval) {
@@ -3307,13 +3319,16 @@ document.getElementById('addWeightBtn')?.addEventListener('click', async () => {
 		const savedUsername = localStorage.getItem('rememberMe_username');
 		const savedPassword = localStorage.getItem('rememberMe_password');
 		
+		let autoLoginDone = false;
 		if (savedUsername && savedPassword) {
 			console.log('🔄 Найдены сохраненные данные входа, попытка автоматического входа...');
 			const autoLoginSuccess = await autoLogin(savedUsername, savedPassword);
 			if (autoLoginSuccess) {
+				autoLoginDone = true;
 				await loadWaterSettings();
 				await loadWaterLogs();
 				await loadWeightLogs();
+				await loadWeightChartData(currentWeightPeriod || 'month');
 			}
 		} else {
 			// Обычная загрузка данных пользователя (через cookies если есть)
@@ -3336,8 +3351,8 @@ document.getElementById('addWeightBtn')?.addEventListener('click', async () => {
 		drawChart();
 		console.log('✓ drawChart завершен');
 		
-		// Загружаем воду если пользователь авторизован
-		if (authenticated) {
+		// Загружаем воду и вес если пользователь авторизован и не был autoLogin
+		if (authenticated && !autoLoginDone) {
 			await loadWaterSettings();
 			await loadWaterLogs();
 			await loadWeightLogs();
