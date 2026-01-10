@@ -508,9 +508,6 @@ input:focus, select:focus {
 	transform: translateY(-2px);
 }
 
-	transform: translateY(0); 
-}
-
 .result {
 	display: flex;
 	gap: 20px;
