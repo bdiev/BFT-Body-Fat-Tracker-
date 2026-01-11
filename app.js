@@ -2355,8 +2355,13 @@ function renderWeightChart(data = []) {
 	
 	ctx.scale(dpr, dpr);
 	
+	const width = rect.width;
+	const height = 320;
+	
+	// Очищаем canvas
+	ctx.clearRect(0, 0, width, height);
+	
 	if (!data || data.length === 0) {
-		const width = rect.width;
 		ctx.fillStyle = '#a5b4fc';
 		ctx.font = '14px "Space Grotesk", system-ui';
 		ctx.textAlign = 'center';
@@ -2364,8 +2369,6 @@ function renderWeightChart(data = []) {
 		return;
 	}
 	
-	const width = rect.width;
-	const height = 320;
 	const padding = 40;
 	
 	// Фон
